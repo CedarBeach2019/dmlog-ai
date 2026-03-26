@@ -1,0 +1,199 @@
+/* DMlog.ai Game Styles — Fantasy TTRPG Theme */
+
+/* ─── Game Shell ─────────────────────────────── */
+.game-shell {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  grid-template-columns: 1fr 320px;
+  grid-template-areas:
+    "top    top"
+    "main   side"
+    "bottom bottom";
+  height: 100vh;
+  background: var(--color-bg, #1a1a2e);
+  color: var(--color-text, #e0d5c1);
+  font-family: 'Cinzel', 'Georgia', serif;
+}
+
+.game-top { grid-area: top; }
+.game-main { grid-area: main; overflow-y: auto; padding: 1rem; }
+.game-side { grid-area: side; border-left: 1px solid #3a2a1a; overflow-y: auto; }
+.game-bottom { grid-area: bottom; border-top: 1px solid #3a2a1a; }
+
+@media (max-width: 768px) {
+  .game-shell {
+    grid-template-columns: 1fr;
+    grid-template-areas: "top" "main" "bottom" "side";
+  }
+}
+
+/* ─── Phase Indicator ────────────────────────── */
+.phase-indicator {
+  display: flex; gap: 0.25rem; align-items: center;
+  padding: 0.5rem 1rem;
+  background: rgba(58, 42, 26, 0.5);
+  border-bottom: 1px solid #3a2a1a;
+}
+.phase-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: #4a3a2a; transition: background 0.3s;
+}
+.phase-dot.active { background: #c9a84c; box-shadow: 0 0 8px #c9a84c88; }
+.phase-label {
+  margin-left: 0.5rem; font-size: 0.85rem;
+  color: #c9a84c; text-transform: uppercase; letter-spacing: 0.1em;
+}
+
+/* ─── Scene / Narration ──────────────────────── */
+.scene-block {
+  margin: 1rem 0; padding: 1.25rem;
+  background: linear-gradient(135deg, #1a1a2e, #16213e);
+  border-left: 3px solid #c9a84c;
+  border-radius: 0 8px 8px 0;
+  line-height: 1.7;
+  animation: fadeIn 0.5s ease;
+}
+.scene-atmosphere {
+  font-style: italic; color: #8a7a6a; margin-top: 0.5rem;
+}
+
+/* ─── NPC Speech ─────────────────────────────── */
+.npc-speech {
+  margin: 0.75rem 0; padding: 0.75rem 1rem;
+  background: #0f3460; border-radius: 12px 12px 4px 12px;
+  max-width: 80%;
+  position: relative;
+  animation: slideIn 0.3s ease;
+}
+.npc-speech::before {
+  content: attr(data-name);
+  position: absolute; top: -0.5rem; left: 0.75rem;
+  background: #c9a84c; color: #1a1a2e;
+  padding: 0 0.4rem; border-radius: 4px;
+  font-size: 0.7rem; font-weight: bold;
+}
+.npc-voice { margin-top: 0.25rem; font-style: italic; color: #8ab4f8; }
+
+/* ─── Dice Roller ────────────────────────────── */
+.dice-tray {
+  display: flex; gap: 0.5rem; flex-wrap: wrap;
+  padding: 0.5rem; justify-content: center;
+}
+.dice-btn {
+  width: 52px; height: 52px;
+  background: linear-gradient(145deg, #2a2a4a, #1a1a2e);
+  border: 2px solid #c9a84c; border-radius: 8px;
+  color: #c9a84c; font-family: 'Cinzel', serif; font-size: 0.85rem;
+  cursor: pointer; transition: all 0.2s;
+  display: flex; align-items: center; justify-content: center;
+}
+.dice-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px #c9a84c44; }
+.dice-btn:active { transform: scale(0.95); }
+.dice-btn.rolling { animation: diceRoll 0.6s ease; }
+
+.dice-result {
+  display: inline-flex; align-items: center; gap: 0.5rem;
+  background: #2a2a4a; padding: 0.5rem 1rem; border-radius: 8px;
+  margin: 0.5rem 0; animation: popIn 0.3s ease;
+}
+.dice-value {
+  font-size: 1.5rem; font-weight: bold; color: #c9a84c;
+}
+.dice-modifier { color: #8a7a6a; font-size: 0.9rem; }
+.dice-total { font-size: 1.2rem; color: #e0d5c1; margin-left: 0.5rem; }
+.dice-nat20 .dice-value { color: #4ade80; text-shadow: 0 0 12px #4ade8088; }
+.dice-nat1 .dice-value { color: #ef4444; text-shadow: 0 0 12px #ef444488; }
+
+/* ─── Combat Tracker ─────────────────────────── */
+.combat-tracker {
+  background: #0f0f23; border-radius: 8px; overflow: hidden;
+}
+.combat-header {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 0.5rem 0.75rem;
+  background: #1a0a0a; border-bottom: 1px solid #4a1a1a;
+  font-size: 0.8rem; color: #c9a84c; text-transform: uppercase;
+}
+.combat-list { list-style: none; padding: 0; }
+.combat-entry {
+  display: grid; grid-template-columns: 32px 1fr 80px 40px;
+  gap: 0.5rem; align-items: center;
+  padding: 0.4rem 0.75rem;
+  border-bottom: 1px solid #1a1a2e;
+  font-size: 0.85rem; transition: background 0.2s;
+}
+.combat-entry.active-turn {
+  background: #2a1a0a; border-left: 3px solid #c9a84c;
+}
+.combat-init { color: #c9a84c; font-weight: bold; }
+.combat-hp-bar {
+  height: 6px; background: #1a1a2e; border-radius: 3px; overflow: hidden;
+}
+.combat-hp-fill {
+  height: 100%; border-radius: 3px; transition: width 0.3s;
+  background: linear-gradient(90deg, #ef4444, #4ade80);
+}
+.combat-hp-text { font-size: 0.75rem; color: #8a8a8a; text-align: right; }
+
+/* ─── Character Sheet ────────────────────────── */
+.character-sheet {
+  display: grid; gap: 0.75rem; padding: 0.75rem;
+}
+.cs-header {
+  text-align: center; padding-bottom: 0.5rem;
+  border-bottom: 1px solid #3a2a1a;
+}
+.cs-name { font-size: 1.1rem; color: #c9a84c; }
+.cs-class { font-size: 0.8rem; color: #8a7a6a; }
+
+.ability-scores {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem;
+}
+.ability-score {
+  text-align: center; padding: 0.5rem;
+  background: #16213e; border-radius: 6px; border: 1px solid #1a1a2e;
+}
+.ability-name { font-size: 0.65rem; color: #8a7a6a; text-transform: uppercase; }
+.ability-value { font-size: 1.3rem; font-weight: bold; color: #e0d5c1; }
+.ability-mod { font-size: 0.8rem; color: #c9a84c; }
+
+.cs-tabs {
+  display: flex; gap: 0; border-bottom: 1px solid #3a2a1a;
+}
+.cs-tab {
+  flex: 1; padding: 0.4rem; text-align: center;
+  font-size: 0.75rem; color: #8a7a6a;
+  border: none; background: transparent; cursor: pointer;
+  border-bottom: 2px solid transparent;
+}
+.cs-tab.active { color: #c9a84c; border-bottom-color: #c9a84c; }
+
+/* ─── Action Bar ─────────────────────────────── */
+.action-bar {
+  display: flex; gap: 0.25rem; padding: 0.5rem;
+  background: rgba(0,0,0,0.3); overflow-x: auto;
+}
+.action-btn {
+  padding: 0.3rem 0.6rem; border-radius: 4px;
+  background: #16213e; border: 1px solid #3a2a1a;
+  color: #e0d5c1; font-size: 0.8rem; cursor: pointer;
+  white-space: nowrap; transition: all 0.2s;
+}
+.action-btn:hover { background: #0f3460; border-color: #c9a84c; }
+.action-btn .cmd { color: #c9a84c; margin-right: 0.25rem; }
+
+/* ─── Animations ─────────────────────────────── */
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes slideIn { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: none; } }
+@keyframes popIn { from { opacity: 0; transform: scale(0.8); } to { opacity: 1; transform: scale(1); } }
+@keyframes diceRoll {
+  0% { transform: rotateX(0) rotateY(0); }
+  25% { transform: rotateX(180deg) rotateY(90deg) scale(1.2); }
+  50% { transform: rotateX(360deg) rotateY(180deg) scale(0.9); }
+  75% { transform: rotateX(540deg) rotateY(270deg) scale(1.1); }
+  100% { transform: rotateX(720deg) rotateY(360deg) scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}

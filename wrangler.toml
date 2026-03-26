@@ -9,16 +9,13 @@ directory = "./web"
 [[d1_databases]]
 binding = "DB"
 database_name = "dmlog-db"
-database_id = ""  # TODO: create with `wrangler d1 create dmlog-db`
+database_id = "1d51f13d-fb6a-4eee-8f98-09a1222edea3"
 
 [[kv_namespaces]]
 binding = "KV"
-id = ""  # TODO: create with `wrangler kv namespace create dmlog-kv`
+id = "68b75858683b4c24905e3d5faa285d87"
 
 [vars]
 ENVIRONMENT = "production"
 THEME = "dmlog"
-PERSONALITY = "dnd-dm"
-
-# Secrets (set via wrangler secret put):
-# JWT_SECRET, DEEPSEEK_API_KEY
+DOMAIN = "ttrpg"
