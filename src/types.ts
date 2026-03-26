@@ -6,6 +6,7 @@ export interface Env {
   R2: R2Bucket;
   ENVIRONMENT: string;
   JWT_SECRET: string;
+  DEEPSEEK_API_KEY: string;
 }
 
 // ─── Hono Variables ────────────────────────────────────────────────────────

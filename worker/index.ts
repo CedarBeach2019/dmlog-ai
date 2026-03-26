@@ -22,7 +22,7 @@ const app = new Hono<{ Bindings: Env; Variables: Variables }>();
 
 app.use('*', logger());
 app.use('*', cors({
-  origin: ['http://localhost:8787', 'http://localhost:5173'],
+  origin: ['http://localhost:8787', 'http://localhost:5173', /^https:\/\/log-origin\..*\.workers\.dev$/],
   allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowHeaders: ['Content-Type', 'Authorization', 'X-LogOrigin-Mode'],
   exposeHeaders: ['X-RateLimit-Limit', 'X-RateLimit-Remaining', 'X-RateLimit-Reset'],

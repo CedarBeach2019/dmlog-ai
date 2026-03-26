@@ -4,16 +4,16 @@ compatibility_date = "2025-03-01"
 compatibility_flags = ["nodejs_compat"]
 
 [assets]
-directory = "./web/dist"
+directory = "./web"
 
 [[d1_databases]]
 binding = "DB"
 database_name = "log-origin-db"
-database_id = "placeholder-replace-after-create"
+database_id = "1d51f13d-fb6a-4eee-8f98-09a1222edea3"
 
 [[kv_namespaces]]
 binding = "KV"
-id = "placeholder-replace-after-create"
+id = "68b75858683b4c24905e3d5faa285d87"
 
 [[r2_buckets]]
 binding = "R2"
