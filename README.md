@@ -1,67 +1,87 @@
-# log-origin
+# DMlog.ai 🐉
 
-> Privacy-first, self-improving AI gateway. Cloudflare-native, forkable, embeddable.
+> **Your AI Dungeon Master Remembers.**
 
-## What Is This
+DMlog.ai is an AI-powered Dungeon Master for D&D 5e and other TTRPGs. Unlike any other AI DM, it **never forgets** — every session, NPC, plot twist, and player choice is logged and remembered across campaigns.
 
-log-origin is the white-label core that powers [LOG.ai](https://github.com/CedarBeach2019/log-origin) — a platform of themed AI gateways (studylog.ai, makerlog.ai, DMlog.ai, etc.). It's also a standalone library you can embed in your own applications.
+## Why DMlog.ai?
 
-**The core idea:** Every interaction builds a log. The log trains the routing. The routing gets better. Your AI has a memory.
+- **Persistent Memory**: The LOG remembers every session. NPCs you met 6 months ago remember you too.
+- **Multiple DM Voices**: Compare how a rules-lawyer DM vs. a narrative DM would handle the same scene.
+- **Style Learning**: Over time, the AI learns what your table enjoys — more combat? More roleplay? More puzzles?
+- **Prep Assistant**: Generate NPCs, encounters, loot, and world-building on demand.
+- **Session Recap**: Never lose track of where the story left off.
 
-## Status
+## Quick Start
 
-🔄 **Architecture Phase** — We're writing the design documents before writing any code. Every table, endpoint, component, threat model, and tradeoff is debated and documented.
+### 1. Clone & Deploy
 
-See `docs/` for the complete design blueprint.
+```bash
+git clone https://github.com/CedarBeach2019/dmlog-ai.git
+cd dmlog-ai
+npm install
 
-## Design Documents
+# Create Cloudflare resources
+CLOUDFLARE_API_TOKEN=xxx npx wrangler d1 create dmlog-db
+# Update wrangler.toml with database_id
+CLOUDFLARE_API_TOKEN=xxx npx wrangler kv namespace create dmlog-kv
+# Update wrangler.toml with KV id
 
-| Document | What It Covers |
-|----------|---------------|
-| [Platform Vision](docs/PLATFORM-VISION.md) | The big picture: LOG.ai concept, domains as hubs, omni-bot, flywheel |
-| [Master Plan](docs/MASTER-PLAN.md) | 7-phase roadmap, architecture overview, privacy model |
-| [Database Schema](docs/database/SCHEMA-DESIGN.md) | Every table, column, index, migration strategy, D1 constraints |
-| [Intelligence Design](docs/routing/INTELLIGENCE-DESIGN.md) | Routing, classification, adaptive learning, draft rounds, agent routing |
-| [Security Model](docs/security/SECURITY-MODEL.md) | 17-threat matrix, auth, authorization, API security, Worker security |
-| [Privacy Architecture](docs/privacy/PRIVACY-ARCHITECTURE.md) | Encryption flows, PII detection, zero-knowledge analysis, compliance |
-| [API Design](docs/api/API-DESIGN.md) | Every endpoint, request/response schemas, streaming, error handling |
-| [Protocol Spec](docs/api/PROTOCOL-SPEC.md) | MCP integration, agent communication, local tunnels, federation |
-| [UX Design](docs/ux/UX-DESIGN.md) | Personas, wireframes, theming, accessibility, information architecture |
-| [Component Spec](docs/ux/COMPONENT-SPEC.md) | Preact components, state management, streaming, performance |
-| [Initial Design](docs/architecture/initial-design.md) | Original design from the research phase |
+# Run migration
+CLOUDFLARE_API_TOKEN=xxx npx wrangler d1 execute dmlog-db --remote --file=migrations/0001_initial.sql
 
-## Key Design Decisions
+# Set secrets
+echo "your-jwt-secret" | CLOUDFLARE_API_TOKEN=xxx npx wrangler secret put JWT_SECRET
+echo "your-deepseek-key" | CLOUDFLARE_API_TOKEN=xxx npx wrangler secret put DEEPSEEK_API_KEY
 
-- **Cloudflare Workers** — edge deployment, $0 on free tier, scale to zero
-- **D1 (SQLite)** — our current Python prototype uses SQLite, D1 ports directly
-- **Preact** — 4KB, no build step, ships as static Worker assets
-- **Hono** — typed HTTP framework for Workers
-- **Client-side encryption** — AES-256-GCM, PBKDF2 key derivation, zero-knowledge at rest
-- **Regex-first routing** — 5ms classification on Workers, ML optimizes rules over time
-- **OpenAI-compatible API** — drop-in replacement for existing SDKs
+# Deploy
+CLOUDFLARE_API_TOKEN=xxx npx wrangler deploy
+```
 
-## Themed Forks
+### 2. Start Playing
 
-log-origin is the engine. Themed forks add personality:
+Register an account, then start chatting. Use slash commands to trigger specific DM behaviors:
 
-- **DMlog.ai** — TTRPG world-builder's AI (first themed variant)
-- **studylog.ai** — AI tutor that remembers what you've learned
-- **makerlog.ai** — AI pair programmer that learns your style
-- **businesslog.ai** — AI assistant for operations and analytics
+| Command | Behavior | Why |
+|---------|----------|-----|
+| `/attack` | Detailed combat logic | Needs accuracy |
+| `/describe` | Atmospheric scene-setting | Creative flair |
+| `/rules` | D&D 5e rules reference | Must be precise |
+| `/npc` | Compare NPC personality options | Multiple voices |
+| `/loot` | Treasure generation | Fun, fast |
+| `/roll` | Dice rolling | No AI needed |
+| `/rest` | Recovery mechanics | Rules knowledge |
+| `/backstory` | World-consistent character history | Context matters |
 
-Each fork customizes: system prompts, UI theme, routing rules, and feature set.
+## The LOG Advantage
 
-## Research
+Every interaction is stored as an **interaction record** — the input, the classification, which AI model handled it, the response, and any feedback you give. This creates something no other AI DM has:
 
-See `.research/` for the raw research that informed the design:
+**Comparative training data.** When you use draft mode to compare how two DM voices handle the same scene, and pick a winner, that preference is logged. Over time, the routing system learns your table's style and routes to the right model automatically.
 
-- `cloudflare-arch.md` — Cloudflare services, limits, pricing
-- `privacy-vault.md` — Encryption research, threat model
-- `agent-tunnels.md` — Cloudflare Tunnel, MCP, A2A protocols
-- `forkable-repo.md` — Fork patterns, update mechanism, personality packs
-- `log-platform.md` — LOG.ai brand concept, omni-bot design
-- `multi-tenant.md` — Workers for Platforms, scaling tiers
-- `agent-network.md` — Agent identity, discovery, communication
+This is the **moat**. The more you play, the better your DM gets.
+
+## Fork of log-origin
+
+DMlog.ai is a themed fork of [log-origin](https://github.com/CedarBeach2019/log-origin) — the white-label AI gateway. All customization lives in `config/custom/`:
+
+- `personality.md` — DM persona with 4 voice modes
+- `rules.json` — TTRPG-specific routing rules
+- `theme.css` — Fantasy parchment/gold UI theme
+- `templates/` — 8 D&D prompt templates
+
+## Architecture
+
+- **Runtime**: Cloudflare Workers (free tier: 100K req/day)
+- **Database**: Cloudflare D1 (SQLite at the edge)
+- **Cache**: Cloudflare KV
+- **AI**: DeepSeek (configurable — add any OpenAI-compatible provider)
+- **UI**: Preact + HTM (no build step, <30KB)
+- **Auth**: PBKDF2 passphrase hashing, JWT via Web Crypto
+
+## Cost
+
+$0/month on Cloudflare's free tier. 100,000 requests/day, 5GB D1 storage, unlimited KV reads.
 
 ## License
 
