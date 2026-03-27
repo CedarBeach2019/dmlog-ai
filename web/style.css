@@ -105,6 +105,10 @@ select{font:inherit;background:var(--bg1);color:var(--t1);border:1px solid var(-
 .message.user{align-self:flex-end}
 .message.assistant{align-self:flex-start}
 .message.system{align-self:center;color:var(--t3);font-size:var(--fs);text-align:center;padding:.25rem .75rem}
+.guest-limit-prompt{display:flex;flex-direction:column;align-items:center;gap:.2rem;padding:1rem 1.5rem;max-width:320px}
+.guest-limit-icon{font-size:1.5rem;margin-bottom:.25rem}
+.guest-limit-text{font-size:.9rem;font-weight:600;color:var(--t1)}
+.guest-limit-hint{font-size:.75rem;color:var(--t3);line-height:1.4}
 .message-bubble{padding:.55rem .85rem;border-radius:12px;line-height:1.65;word-wrap:break-word}
 .message.user .message-bubble{background:var(--ubg);border:1px solid var(--ubd);border-bottom-right-radius:4px}
 .message.assistant .message-bubble{background:var(--bg3);border-bottom-left-radius:4px}

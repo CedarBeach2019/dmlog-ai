@@ -141,8 +141,17 @@ export function Chat() {
         interactionId: result.interactionId, routeAction: result.routeAction, ts: Date.now(),
       }]);
     } catch (err) {
-      addToast(err.message, 'error');
-      setMessages(prev => [...prev, { role: 'system', content: `Error: ${err.message}`, ts: Date.now() }]);
+      const msg = err.message || '';
+      if (msg.includes('guest_limit') || msg.includes('429')) {
+        // Guest limit reached — prompt to sign up
+        setMessages(prev => [...prev, {
+          role: 'system', content: 'GUEST_LIMIT', ts: Date.now(),
+        }]);
+        authState.value = { isLoggedIn: false, token: null };
+      } else {
+        addToast(msg, 'error');
+        setMessages(prev => [...prev, { role: 'system', content: `Error: ${msg}`, ts: Date.now() }]);
+      }
     } finally {
       setIsStreaming(false);
       setStreamingContent('');

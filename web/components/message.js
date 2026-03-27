@@ -23,6 +23,16 @@ export function Message({ message }) {
   const time = ts ? new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
 
   if (role === 'system') {
+    if (content === 'GUEST_LIMIT') {
+      return html`
+        <div class="message system guest-limit-prompt">
+          <div class="guest-limit-icon">🏰</div>
+          <div class="guest-limit-text">Your free messages are up!</div>
+          <div class="guest-limit-hint">Create a free account to continue your adventure. Your guest messages are saved.</div>
+          <button class="primary" style="margin-top:.5rem;padding:.4rem 1rem" onclick=${() => { authState.value = { isLoggedIn: false, token: null }; }}>Create Free Account</button>
+        </div>
+      `;
+    }
     return html`<div class="message system">${content}</div>`;
   }
 
