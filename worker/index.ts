@@ -12,13 +12,7 @@ import authRoutes from './routes/auth.js';
 import chatRoutes from './routes/chat.js';
 import draftRoutes from './routes/drafts.js';
 import sessionRoutes from './routes/sessions.js';
-import providerRoutes from './routes/providers.js';
-import preferenceRoutes from './routes/preferences.js';
 import healthRoutes from './routes/health.js';
-import metricsRoutes from './routes/metrics.js';
-import configRoutes from './routes/config.js';
-import dmlogRoutes from './routes/dmlog.js';
-import { getThemeCSS } from './dmlog-config.js';
 import { rateLimitMiddleware } from './middleware/rate-limit.js';
 import { requestLogger } from '../src/middleware/request-logger.js';
 
@@ -52,23 +46,8 @@ protectedApi.use('*', authMiddleware);
 protectedApi.route('/chat', chatRoutes);
 protectedApi.route('/drafts', draftRoutes);
 protectedApi.route('/sessions', sessionRoutes);
-protectedApi.route('/providers', providerRoutes);
-protectedApi.route('/preferences', preferenceRoutes);
-protectedApi.route('/metrics', metricsRoutes);
-protectedApi.route('/config', configRoutes);
-protectedApi.route('/dmlog', dmlogRoutes);
 app.route('/v1', protectedApi);
 
-app.get('/', (c) => c.json({ name: c.env.THEME === 'dmlog' ? 'dmlog-ai' : 'log-origin', version: '0.1.0' }));
-
-// Serve custom theme CSS for DMlog
-app.get('/theme.css', async (c) => {
-  if (c.env.THEME !== 'dmlog') return c.notFound();
-  const css = await getThemeCSS(c.env);
-  if (!css) return c.notFound();
-  return new Response(css, {
-    headers: { 'Content-Type': 'text/css; charset=utf-8', 'Cache-Control': 'public, max-age=3600' },
-  });
-});
+app.get('/', (c) => c.json({ name: 'dmlog-ai', version: '0.1.0' }));
 
 export default app;

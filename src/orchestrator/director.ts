@@ -1,6 +1,6 @@
 // ─── Director Agent — Routes user input to the correct sub-agent ────────────
 
-import type { TTRPGSessionState, TTRPGPhase } from './session-state';
+import { TTRPGSessionState, TTRPGPhase } from './session-state';
 import { ALL_AGENTS } from './agents';
 
 export interface DirectorDecision {
@@ -57,9 +57,9 @@ const ROUTING_RULES: RoutingRule[] = [
 
 // Phase transition suggestions based on events
 const PHASE_TRANSITIONS: Array<{ trigger: RegExp; from: TTRPGPhase[]; to: TTRPGPhase }> = [
-  { trigger: /\b(ambush|combat begins|enemy attacks|roll initiative|draw weapon|fight)\b/i, from: ['EXPLORATION', 'ROLEPLAY', 'INTRODUCTION'], to: 'COMBAT' as TTRPGPhase },
-  { trigger: /\b(enemy defeated|combat over|last enemy falls|fled combat)\b/i, from: ['COMBAT'], to: 'RESOLUTION' as TTRPGPhase },
-  { trigger: /\b(rest|sleep|make camp)\b/i, from: ['EXPLORATION', 'COMBAT'], to: 'RESOLUTION' as TTRPGPhase },
+  { trigger: /\b(ambush|combat begins|enemy attacks|roll initiative|draw weapon|fight)\b/i, from: [TTRPGPhase.EXPLORATION, TTRPGPhase.ROLEPLAY, TTRPGPhase.INTRODUCTION], to: TTRPGPhase.COMBAT as TTRPGPhase },
+  { trigger: /\b(enemy defeated|combat over|last enemy falls|fled combat)\b/i, from: [TTRPGPhase.COMBAT], to: TTRPGPhase.RESOLUTION as TTRPGPhase },
+  { trigger: /\b(rest|sleep|make camp)\b/i, from: [TTRPGPhase.EXPLORATION, TTRPGPhase.COMBAT], to: TTRPGPhase.RESOLUTION as TTRPGPhase },
 ];
 
 export function routeToAgent(

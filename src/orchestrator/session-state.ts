@@ -181,9 +181,9 @@ export function transition(state: TTRPGSessionState, event: TTRPGEvent): TTRPGSe
       break;
 
     case 'npc_update': {
-      const existing = next.activeNPCs.get(event.id);
+      const existing = next.activeNPCs.get(event.npc.id);
       if (existing) {
-        next.activeNPCs.set(event.id, { ...existing, ...event });
+        next.activeNPCs.set(event.npc.id, { ...existing, ...event.npc });
       }
       break;
     }
@@ -197,9 +197,9 @@ export function transition(state: TTRPGSessionState, event: TTRPGEvent): TTRPGSe
       break;
 
     case 'character_update': {
-      const existing = next.characters.get(event.id);
+      const existing = next.characters.get(event.character.id);
       if (existing) {
-        next.characters.set(event.id, { ...existing, ...event });
+        next.characters.set(event.character.id, { ...existing, ...event.character });
       }
       break;
     }
