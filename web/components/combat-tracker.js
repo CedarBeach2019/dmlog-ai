@@ -1,7 +1,5 @@
 // ─── Combat Tracker Component (Preact + HTM) ────────────────────────────────
-import { h, Component } from 'preact';
-import { html } from 'htm/preact';
-import { signal } from 'preact/signals';
+import { html, Component, signal } from '../preact-shim.js';
 
 const CONDITION_ICONS = {
   poisoned: '☠️', stunned: '💫', paralyzed: '⚡', charmed: '💜',

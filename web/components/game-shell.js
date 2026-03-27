@@ -1,7 +1,5 @@
 // ─── Game Shell — Main TTRPG interface (Preact + HTM, no build step) ─────────
-import { h, render } from 'preact';
-import { html, Component } from 'htm/preact';
-import { signal, computed, effect } from 'preact/signals';
+import { html, render, Component, signal, computed, effect } from '../preact-shim.js';
 import { DiceRoller, rollResults } from './dice-roller.js';
 import { CombatTracker } from './combat-tracker.js';
 import { CharacterSheet } from './character-sheet.js';

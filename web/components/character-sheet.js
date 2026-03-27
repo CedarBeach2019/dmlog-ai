@@ -1,7 +1,5 @@
 // ─── Character Sheet Component (Preact + HTM) ───────────────────────────────
-import { h, Component } from 'preact';
-import { html } from 'htm/preact';
-import { signal } from 'preact/signals';
+import { html, Component, signal } from '../preact-shim.js';
 
 const ABILITY_ORDER = ['str', 'dex', 'con', 'int', 'wis', 'cha'];
 const ABILITY_NAMES = { str: 'STR', dex: 'DEX', con: 'CON', int: 'INT', wis: 'WIS', cha: 'CHA' };

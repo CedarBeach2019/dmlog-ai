@@ -1,7 +1,5 @@
 // ─── Scene Manager Component (Preact + HTM) ────────────────────────────────
-import { h, Component } from 'preact';
-import { html } from 'htm/preact';
-import { signal } from 'preact/signals';
+import { html, Component, signal } from '../preact-shim.js';
 
 const scenes = signal([
   { id: 1, name: 'The Rusty Tankard', description: 'A dimly lit tavern with smoke-stained beams. The air smells of stale ale and roasted meat.', atmosphere: 'Cozy but seedy', npcs: ['Mira "Soot" Vaskar'], map: 'tavern', tags: ['tavern', 'social'] },

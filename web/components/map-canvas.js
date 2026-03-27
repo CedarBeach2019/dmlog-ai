@@ -1,6 +1,5 @@
 // ─── Map Canvas Component — Tactical Battle Map (Preact + HTM) ─────────────
-import { h, Component } from 'preact';
-import { html } from 'htm/preact';
+import { html, Component } from '../preact-shim.js';
 
 const BACKGROUNDS = [
   { id: 'grass', name: 'Grass Field', color: '#2d5a1e', pattern: 'grass' },
