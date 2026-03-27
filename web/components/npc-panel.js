@@ -1,5 +1,5 @@
 import { html, useState, useEffect } from '../preact-shim.js';
-import { authState, addToast } from '../app.js';
+import { authState, sessionUpdated, addToast } from '../app.js';
 
 export function NPCPanel() {
   const [npcs, setNpcs] = useState([]);
@@ -35,7 +35,7 @@ export function NPCPanel() {
     }
   };
 
-  useEffect(() => { fetchNPCs(); }, []);
+  useEffect(() => { fetchNPCs(); }, [sessionUpdated.value]);
 
   const formatTime = (ts) => {
     if (!ts) return '';
