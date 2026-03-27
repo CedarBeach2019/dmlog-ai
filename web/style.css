@@ -66,6 +66,10 @@ select{font:inherit;background:var(--bg1);color:var(--t1);border:1px solid var(-
 .sidebar.collapsed{transform:translateX(-100%);position:absolute;height:100%}
 .sidebar-header{padding:.75rem 1rem;border-bottom:1px solid var(--bd);display:flex;justify-content:space-between;align-items:center}
 .sidebar-header h2{font-size:var(--fb);font-weight:600}
+.sidebar-search{padding:.35rem .75rem}
+.sidebar-search input{width:100%;padding:.4rem .6rem;border:1px solid var(--bd);border-radius:var(--r);background:var(--bg1);color:var(--t1);font-size:var(--fs);outline:none;transition:border-color var(--tr)}
+.sidebar-search input:focus{border-color:var(--ac)}
+.sidebar-search input::placeholder{color:var(--t3)}
 .session-list{flex:1;overflow-y:auto;padding:.35rem}
 
 .session-item{padding:.5rem .75rem;border-radius:var(--r);cursor:pointer;display:flex;flex-direction:column;gap:2px;font-size:var(--fs);margin-bottom:1px;transition:background var(--tr);animation:slideIn .2s ease}

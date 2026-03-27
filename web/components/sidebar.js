@@ -7,8 +7,17 @@ export function Sidebar() {
   const [recap, setRecap] = useState(null);
   const [recapId, setRecapId] = useState(null);
   const [activeId, setActiveId] = useState(null);
+  const [search, setSearch] = useState('');
 
   const getToken = () => sessionStorage.getItem('lo-token');
+
+  const filtered = search.trim()
+    ? sessionList.filter(s =>
+        (s.summary || '').toLowerCase().includes(search.toLowerCase()) ||
+        (s.last_message || '').toLowerCase().includes(search.toLowerCase()) ||
+        (s.first_message || '').toLowerCase().includes(search.toLowerCase())
+      )
+    : sessionList;
 
   const fetchSessions = async () => {
     const token = getToken();
@@ -87,16 +96,22 @@ export function Sidebar() {
         <h2>📜 Campaign Log</h2>
         <button class="icon-btn" onclick=${() => sidebarOpen.value = false} title="Close sidebar">✕</button>
       </div>
+      <div class="sidebar-search">
+        <input type="text" placeholder="🔍 Search campaigns..." value=${search}
+          oninput=${(e) => setSearch(e.target.value)} />
+      </div>
       <div class="session-list">
         ${loading ? html`
           <div class="session-loading"><span class="spinner"></span> Loading...</div>
-        ` : sessionList.length === 0 ? html`
+        ` : filtered.length === 0 && sessionList.length > 0 ? html`
+          <div class="session-empty"><div>No matches for "${search}"</div></div>
+        ` : filtered.length === 0 ? html`
           <div class="session-empty">
             <div class="session-empty-icon">📖</div>
             <div>No campaigns yet</div>
             <div class="session-empty-hint">Start chatting to begin your adventure</div>
           </div>
-        ` : sessionList.map(s => html`
+        ` : filtered.map(s => html`
           <div class="session-item ${activeId === s.id ? 'active' : ''}"
                onclick=${() => { setActiveId(s.id); loadSessionSignal.value = s.id; if (window.innerWidth < 768) sidebarOpen.value = false; }}>
             <div class="session-title">${truncate(s.summary || s.last_message || s.first_message)}</div>
