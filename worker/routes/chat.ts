@@ -10,6 +10,7 @@ import { classify } from '../../src/routing/router.js';
 import { chatStream, chat, ProviderError } from '../../src/providers/openai-compatible.js';
 import { sign, verify } from '../../src/crypto/jwt.js';
 import { getSystemPrompt } from '../dmlog-config.js';
+import { isGuest, checkGuestLimit } from '../../src/middleware/guest.js';
 
 const chatApp = new Hono<{ Bindings: Env; Variables: Variables }>();
 
@@ -95,6 +96,17 @@ chatApp.post('/completions', async (c) => {
 
   const isStream = body.stream === true;
 
+  // Enforce guest message limit
+  if (isGuest(userId) && c.env.KV) {
+    const ip = userId.replace('guest:', '');
+    const { allowed, state } = await checkGuestLimit(c.env.KV, ip);
+    if (!allowed) {
+      return c.json({
+        error: { type: 'rate_limit', code: 'guest_limit', message: `Guest limit reached (${state.maxMessages} messages). Create a free account to continue.` }
+      }, 429);
+    }
+  }
+
   if (isStream) {
     // Streaming response
     const stream = new ReadableStream({
@@ -144,6 +156,14 @@ chatApp.post('/completions', async (c) => {
           await c.env.DB.prepare(
             `UPDATE sessions SET message_count = message_count + 2, last_message_at = datetime('now') WHERE id = ?`
           ).bind(sessionId).run();
+
+          // Extract NPCs from AI response
+          if (sessionId) {
+            try {
+              const npcs = extractNPCs(rehydratedContent);
+              if (npcs.length > 0) await upsertNPCs(c.env.DB, userId, npcs, sessionId);
+            } catch {}
+          }
         } catch (err) {
           const msg = err instanceof ProviderError ? err.message : 'Internal error';
           controller.enqueue(encoder.encode(`data: ${JSON.stringify({ error: msg })}\n\n`));
