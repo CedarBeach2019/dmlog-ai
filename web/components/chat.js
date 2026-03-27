@@ -189,22 +189,27 @@ export function Chat() {
     const userMsg = { role: 'user', content: text, ts: Date.now() };
     setMessages(prev => [...prev, userMsg]);
     setInput('');
-    setIsStreaming(true);
+
+    const token = sessionStorage.getItem('lo-token') || authState.value.token;
     try {
       const sid = await ensureSession();
       const chatMessages = [...messages, userMsg].map(m => ({ role: m.role, content: m.content }));
-      const body = { messages: chatMessages, stream: true };
-      if (sid) body.session_id = sid;
-      const startTime = Date.now();
-      const result = await streamResponse('/v1/chat/completions', body);
-      setDrafts([{
-        provider: result.model || 'default', content: result.content,
-        latency: Date.now() - startTime, interactionId: result.interactionId,
-      }]);
+      const res = await fetch('/v1/drafts/compare', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ messages: chatMessages, session_id: sid, max_tokens: 500 }),
+      });
+      if (!res.ok) {
+        const errText = await res.text().catch(() => '');
+        let errMsg = `HTTP ${res.status}`;
+        try { errMsg = JSON.parse(errText).error?.message || errMsg; } catch {}
+        throw new Error(errMsg);
+      }
+      const data = await res.json();
+      setDrafts(data.drafts || []);
     } catch (err) {
       addToast(err.message, 'error');
-    } finally {
-      setIsStreaming(false);
+      setDraftMode(false);
     }
   };
 
@@ -212,9 +217,16 @@ export function Chat() {
     const draft = drafts[idx];
     if (!draft) return;
     setMessages(prev => [...prev, {
-      role: 'assistant', content: draft.content, model: draft.provider,
-      interactionId: draft.interactionId, ts: Date.now(),
+      role: 'assistant', content: draft.content, model: draft.model,
+      interactionId: draft.id, routeAction: draft.profile, ts: Date.now(),
     }]);
+    // Record winner for routing optimization
+    const token = sessionStorage.getItem('lo-token') || authState.value.token;
+    fetch(`/v1/drafts/winner/${draft.id}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ profile: draft.profile }),
+    }).catch(() => {});
     setDraftMode(false);
     setDrafts([]);
   };
