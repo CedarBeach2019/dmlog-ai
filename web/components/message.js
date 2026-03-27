@@ -1,5 +1,5 @@
 import { html, useState } from '../preact-shim.js';
-import { MessageContent } from './chat.js';
+import { MessageContent } from './message-content.js';
 import { authState, addToast } from '../app.js';
 
 function sendFeedback(interactionId, sentiment) {
