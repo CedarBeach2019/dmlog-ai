@@ -1,7 +1,7 @@
 import { html, useState, useRef, useEffect } from '../preact-shim.js';
 import { Message, MessageContent } from './message.js';
 import { DraftPanel } from './draft-panel.js';
-import { authState, theme, sidebarOpen, currentSessionId, sessionUpdated, loadSessionSignal, addToast } from '../app.js';
+import { authState, theme, sidebarOpen, currentSessionId, sessionUpdated, loadSessionSignal, settingsOpen, addToast } from '../app.js';
 
 export function Chat() {
   const [messages, setMessages] = useState([]);
@@ -206,24 +206,30 @@ export function Chat() {
     <div class="chat-area">
       <div class="chat-header">
         <button onclick=${() => sidebarOpen.value = !sidebarOpen.value}>☰</button>
-        <div class="chat-title">${activeSessionId ? '💬 Chat' : '🔐 LOG — Your AI Remembers'}</div>
+        <div class="chat-title">${activeSessionId ? '🏰 Adventure' : '🏰 DMlog.ai'}</div>
         <div class="actions">
-          <button onclick=${() => setDraftMode(!draftMode)} title="Compare responses">${draftMode ? '✕' : '🎯'}</button>
-          <button onclick=${handleNewChat} title="New chat">+ New</button>
-          <button onclick=${() => theme.value = theme.value === 'dark' ? 'light' : 'dark'}>${theme.value === 'dark' ? '☀️' : '🌙'}</button>
-          <button onclick=${() => settingsOpen.value = true}>⚙</button>
+          <button onclick=${() => setDraftMode(!draftMode)} title="Compare responses" class="icon-btn">${draftMode ? '✕' : '🎯'}</button>
+          <button onclick=${handleNewChat} title="New adventure" class="icon-btn">+ New</button>
+          <button onclick=${() => theme.value = theme.value === 'dark' ? 'light' : 'dark'} class="icon-btn">${theme.value === 'dark' ? '☀️' : '🌙'}</button>
+          <button onclick=${() => settingsOpen.value = true} class="icon-btn">⚙</button>
         </div>
       </div>
       ${draftMode && drafts.length > 0 ? html`
         <${DraftPanel} drafts=${drafts} onPick=${pickDraft} onClose=${() => setDraftMode(false)} />
       ` : html`
         <div class="message-list" ref=${listRef}>
-          ${loadingSession ? html`<div class="session-loading">Loading session...</div>` :
+          ${loadingSession ? html`<div class="empty-state"><span class="spinner" style="font-size:1.5rem;width:24px;height:24px"></span><div class="empty-hint" style="margin-top:.75rem">Loading campaign...</div></div>` :
             messages.length === 0 ? html`
               <div class="empty-state">
-                <div class="empty-icon">🔐</div>
-                <div class="empty-title">Your AI remembers everything.</div>
-                <div class="empty-hint">Every conversation builds your memory. Type a message to start.</div>
+                <div class="empty-icon">🏰</div>
+                <div class="empty-title">Your adventure awaits.</div>
+                <div class="empty-hint">Describe what you want to do, or ask the DM to set the scene.</div>
+                <div class="empty-prompts">
+                  <button class="prompt-chip" onclick=${() => setInput('I walk into the nearest tavern')}>🚪 Walk into a tavern</button>
+                  <button class="prompt-chip" onclick=${() => setInput('I search for treasure in the ancient ruins')}>⛏️ Search for treasure</button>
+                  <button class="prompt-chip" onclick=${() => setInput('A dragon appears on the horizon!')}>🐉 Spot a dragon</button>
+                  <button class="prompt-chip" onclick=${() => setInput('Tell me about the world I am in')}>🗺️ Learn about this world</button>
+                </div>
               </div>
             ` :
             messages.map((m, i) => html`<${Message} key=${i} message=${m} />`)

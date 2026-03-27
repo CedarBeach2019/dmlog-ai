@@ -54,6 +54,7 @@ function App() {
       ${authState.value.isLoggedIn ? html`
         <div class="layout">
           <${Sidebar} />
+          <div class="sidebar-backdrop" onclick=${() => sidebarOpen.value = false}></div>
           <${Chat} />
           <${NPCPanel} />
         </div>

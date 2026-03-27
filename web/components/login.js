@@ -256,27 +256,28 @@ export function Login() {
     return html`
       <div class="login">
         <div class="login-card landing">
-          <h1>🔐 LOG</h1>
-          <p class="tagline">Your AI remembers everything.</p>
-          <button class="primary" onclick=${() => setMode('quickstart')} style="width:100%;font-size:1rem;padding:.75rem;margin-bottom:.5rem">
+          <div style="font-size:2rem;margin-bottom:.5rem">🏰</div>
+          <h1>DMlog.ai</h1>
+          <p class="tagline">Your AI Dungeon Master remembers everything.</p>
+          <button class="primary" onclick=${() => setMode('quickstart')} style="width:100%;font-size:1rem;padding:.75rem;margin-bottom:.75rem">
             🎮 Start a Campaign — No Signup
           </button>
           <div class="features">
-            <div class="feature">🧠 Every conversation builds your memory</div>
-            <div class="feature">🔒 Your data is encrypted at rest</div>
-            <div class="feature">⚡ Multi-model routing finds the best response</div>
-            <div class="feature">📊 Feedback improves future answers</div>
+            <div class="feature">🧠 The DM remembers every session, NPC, and plot thread</div>
+            <div class="feature">🎲 Built-in dice, combat, and character tracking</div>
+            <div class="feature">⚡ Multi-model AI finds the best narration</div>
+            <div class="feature">🔒 Your campaign data is encrypted</div>
           </div>
           ${error && html`<div class="error">${error}</div>`}
           <button class="guest-btn" onclick=${handleGuest} disabled=${isLoading}>
-            ${isLoading ? html`<span class="spinner"></span>` : '⚡ Try the AI chat (free)'}
+            ${isLoading ? html`<span class="spinner"></span>` : '⚡ Quick play (free, 5 messages)'}
           </button>
           <div class="auth-divider"><span>or</span></div>
           <div class="auth-links">
-            <button class="link-btn" onclick=${() => setMode('login')}>Sign in with passphrase</button>
-            <button class="link-btn" onclick=${() => setMode('register')}>Create new account</button>
+            <button class="link-btn" onclick=${() => setMode('login')}>Sign in</button>
+            <button class="link-btn" onclick=${() => setMode('register')}>Create account</button>
           </div>
-          <p class="fine-print">5 free guest messages, then create an account. $0/month forever.</p>
+          <p class="fine-print">Free forever. Open source. Your data, your rules.</p>
         </div>
       </div>
     `;
