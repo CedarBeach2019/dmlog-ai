@@ -192,3 +192,16 @@ CREATE INDEX IF NOT EXISTS idx_exports_user ON training_exports(user_id, created
 
 -- Insert initial schema version
 INSERT OR IGNORE INTO schema_version (version, description) VALUES (1, 'Initial schema');
+-- NPCs table for auto-extracted characters
+CREATE TABLE IF NOT EXISTS npcs (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL,
+  session_id TEXT,
+  name TEXT NOT NULL,
+  title TEXT,
+  description TEXT,
+  first_mentioned TEXT NOT NULL,
+  last_mentioned TEXT NOT NULL,
+  mention_count INTEGER DEFAULT 1,
+  UNIQUE(user_id, name)
+);

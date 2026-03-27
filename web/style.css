@@ -120,3 +120,17 @@ select{font:inherit;background:var(--bg1);color:var(--t1);border:1px solid var(-
   .world-grid { grid-template-columns: 1fr; }
   .class-grid { grid-template-columns: 1fr 1fr; }
 }
+/* NPC Panel */
+.npc-panel { background: var(--bg1); border-left: 1px solid var(--bd); padding: .5rem; overflow-y: auto; font-size: var(--fs); }
+.npc-panel.collapsed { padding: .5rem; cursor: pointer; text-align: center; border-left: 1px solid var(--bd); }
+.npc-header { display: flex; justify-content: space-between; align-items: center; padding: .25rem 0; margin-bottom: .25rem; border-bottom: 1px solid var(--bd); font-weight: 600; }
+.npc-header button { background: transparent; border: none; cursor: pointer; font-size: .8rem; padding: 1px 4px; }
+.npc-list { display: flex; flex-direction: column; gap: 2px; }
+.npc-item { padding: .35rem .5rem; border-radius: 4px; cursor: pointer; transition: background .15s; }
+.npc-item:hover { background: var(--bg2); }
+.npc-name { font-weight: 600; color: var(--t1); font-size: .85rem; }
+.npc-title { color: var(--ac); font-size: .75rem; font-style: italic; }
+.npc-meta { color: var(--t3); font-size: .65rem; }
+.npc-detail { margin-top: .25rem; padding: .35rem; background: var(--bg2); border-radius: 4px; }
+.npc-desc { font-size: .75rem; color: var(--t2); line-height: 1.4; }
+.npc-empty, .npc-loading { padding: 1rem; text-align: center; color: var(--t3); font-size: .75rem; }

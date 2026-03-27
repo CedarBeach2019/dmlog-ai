@@ -3,6 +3,7 @@ import { Login } from './components/login.js';
 import { Chat } from './components/chat.js';
 import { Sidebar } from './components/sidebar.js';
 import { Settings } from './components/settings.js';
+import { NPCPanel } from './components/npc-panel.js';
 
 // Global state
 export const authState = signal({ isLoggedIn: false, token: null, userId: null });
@@ -54,6 +55,7 @@ function App() {
         <div class="layout">
           <${Sidebar} />
           <${Chat} />
+          <${NPCPanel} />
         </div>
       ` : html`<${Login} />`}
       <${Settings} />

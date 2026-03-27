@@ -5,6 +5,7 @@
 import { Hono } from 'hono';
 import type { Env, Variables, ChatRequest, ProviderMessage } from '../../src/types.js';
 import { dehydrate, rehydrate } from '../../src/pii/engine.js';
+import { extractNPCs, upsertNPCs } from '../../src/npc-extractor.js';
 import { classify } from '../../src/routing/router.js';
 import { chatStream, chat, ProviderError } from '../../src/providers/openai-compatible.js';
 import { sign, verify } from '../../src/crypto/jwt.js';
@@ -203,6 +204,18 @@ chatApp.post('/completions', async (c) => {
     `UPDATE sessions SET message_count = message_count + 2, last_message_at = datetime('now') WHERE id = ?`
   ).bind(sessionId).run();
 
+  // Extract and store NPCs from AI response (async, don't block)
+  if (sessionId) {
+    try {
+      const npcs = extractNPCs(rehydratedContent);
+      if (npcs.length > 0) {
+        await upsertNPCs(c.env.DB, userId, npcs, sessionId);
+      }
+    } catch (err) {
+      console.error('NPC extraction failed:', err);
+    }
+  }
+
   return c.json({
     id: `chatcmpl-${interactionId}`,
     object: 'chat.completion',
@@ -236,3 +249,11 @@ chatApp.patch('/interactions/:id/feedback', async (c) => {
 });
 
 export default chatApp;
+
+// GET /npcs — list extracted NPCs for the current user
+chatApp.get('/npcs', async (c) => {
+  const userId = c.get('userId');
+  const { getNPCs } = await import('../../src/npc-extractor.js');
+  const npcs = await getNPCs(c.env.DB, userId);
+  return c.json({ npcs });
+});
