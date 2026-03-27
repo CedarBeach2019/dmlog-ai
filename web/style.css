@@ -131,6 +131,12 @@ select{font:inherit;background:var(--bg1);color:var(--t1);border:1px solid var(-
 .message-bubble h1,.message-bubble h2,.message-bubble h3{margin:.5rem 0 .25rem}
 
 .streaming-cursor::after{content:'▌';animation:blink 1s step-end infinite;color:var(--ac)}
+.typing-indicator{display:flex;align-items:center;gap:.35rem;color:var(--t3);font-size:.8rem;padding:.5rem 0;animation:fadeInFast .3s ease}
+.typing-dots{display:flex;gap:3px}
+.typing-dots span{width:6px;height:6px;border-radius:50%;background:var(--t3);animation:typingBounce 1.4s infinite}
+.typing-dots span:nth-child(2){animation-delay:.2s}
+.typing-dots span:nth-child(3){animation-delay:.4s}
+@keyframes typingBounce{0%,60%,100%{transform:translateY(0);opacity:.4}30%{transform:translateY(-4px);opacity:1}}
 
 /* Empty State */
 .empty-state{text-align:center;padding:3rem 1.5rem;animation:fadeIn .5s ease}
