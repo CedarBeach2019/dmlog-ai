@@ -1,5 +1,4 @@
-import { render, signal, effect } from 'preact';
-import { html } from 'htm/preact';
+import { render, signal, useEffect, html } from './preact-shim.js';
 import { Login } from './components/login.js';
 import { Chat } from './components/chat.js';
 import { Sidebar } from './components/sidebar.js';
@@ -12,14 +11,27 @@ export const sidebarOpen = signal(true);
 export const settingsOpen = signal(false);
 export const sessions = signal([]);
 export const currentSessionId = signal(null);
+export const sessionUpdated = signal(0);
+export const loadSessionSignal = signal(null);
 export const toasts = signal([]);
 export const overlay = signal(null);
 
 // Theme sync
-effect(() => {
+useEffect(() => {
   document.documentElement.setAttribute('data-theme', theme.value);
   localStorage.setItem('lo-theme', theme.value);
-});
+  if (window.location.hostname.includes('dmlog')) {
+    const existing = document.getElementById('dm-theme-css');
+    if (!existing) {
+      const link = document.createElement('link');
+      link.id = 'dm-theme-css';
+      link.rel = 'stylesheet';
+      link.href = '/theme.css';
+      document.head.appendChild(link);
+      document.body.classList.add('dm-theme');
+    }
+  }
+}, []);
 
 // Keyboard shortcuts
 document.addEventListener('keydown', (e) => {

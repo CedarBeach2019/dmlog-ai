@@ -6,7 +6,7 @@ import { createMiddleware } from 'hono/factory';
 import type { Env, Variables } from '../../src/types.js';
 import { verify } from '../../src/crypto/jwt.js';
 
-const SKIP_PATHS = ['/v1/auth/login', '/v1/auth/register', '/v1/health'];
+const SKIP_PATHS = ['/v1/auth/login', '/v1/auth/register', '/v1/auth/guest', '/v1/health'];
 
 export const authMiddleware = createMiddleware<{ Bindings: Env; Variables: Variables }>(
   async (c, next) => {
