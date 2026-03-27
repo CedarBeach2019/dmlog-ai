@@ -1,0 +1,51 @@
+/* DMlog.ai Theme — atmospheric TTRPG styling on top of base */
+body.dm-theme { background: #0a0e14; }
+[data-theme="light"] body.dm-theme { background: #fdf8f0; }
+
+body.dm-theme .login-card { background: #111820; border-color: #1e2a3a; }
+[data-theme="light"] body.dm-theme .login-card { background: #fff9f0; border-color: #e8ddd0; }
+
+body.dm-theme .chat-area { background: #0a0e14; }
+[data-theme="light"] body.dm-theme .chat-area { background: #fefcf8; }
+
+body.dm-theme .message.assistant .message-bubble {
+  background: #141c26;
+  border: 1px solid #1e2a3a;
+  border-left: 2px solid #c9a23c;
+}
+[data-theme="light"] body.dm-theme .message.assistant .message-bubble {
+  background: #fff8ee;
+  border: 1px solid #e8ddd0;
+  border-left: 2px solid #b8860b;
+}
+
+body.dm-theme .empty-icon { filter: drop-shadow(0 0 20px rgba(201, 162, 60, 0.3)); }
+
+body.dm-theme .input-area { background: #0d1219; }
+body.dm-theme .input-area textarea { background: #111820; border-color: #1e2a3a; }
+[data-theme="light"] body.dm-theme .input-area { background: #f5efe5; }
+[data-theme="light"] body.dm-theme .input-area textarea { background: #fff; border-color: #e0d5c5; }
+
+body.dm-theme .prompt-chip { border-color: #1e2a3a; }
+body.dm-theme .prompt-chip:hover { background: #c9a23c; border-color: #c9a23c; color: #0a0e14; }
+[data-theme="light"] body.dm-theme .prompt-chip { border-color: #e0d5c5; }
+[data-theme="light"] body.dm-theme .prompt-chip:hover { background: #b8860b; border-color: #b8860b; color: #fff; }
+
+body.dm-theme .sidebar { background: #0d1219; }
+[data-theme="light"] body.dm-theme .sidebar { background: #f5efe5; }
+
+body.dm-theme .session-item.active { background: rgba(201, 162, 60, 0.08); border-color: rgba(201, 162, 60, 0.3); }
+[data-theme="light"] body.dm-theme .session-item.active { background: rgba(184, 134, 11, 0.08); border-color: rgba(184, 134, 11, 0.3); }
+
+body.dm-theme .session-recap { border-left-color: #c9a23c; }
+[data-theme="light"] body.dm-theme .session-recap { border-left-color: #b8860b; }
+
+body.dm-theme .world-card.selected { border-color: #c9a23c; box-shadow: 0 0 0 1px #c9a23c; }
+body.dm-theme .class-card.selected { border-color: #c9a23c; box-shadow: 0 0 0 1px #c9a23c; }
+body.dm-theme .npc-panel { background: #0d1219; border-left-color: #1e2a3a; }
+
+body.dm-theme .npc-title { color: #c9a23c; }
+[data-theme="light"] body.dm-theme .npc-title { color: #b8860b; }
+
+body.dm-theme .adventure-text strong { color: #c9a23c; }
+[data-theme="light"] body.dm-theme .adventure-text strong { color: #b8860b; }

@@ -279,5 +279,11 @@ function renderInlineMarkdown(text) {
     .replace(/\*(.*?)\*/g, '<em>$1</em>')
     .replace(/`([^`]+)`/g, '<code>$1</code>')
     .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>')
+    .replace(/^### (.+)$/gm, '<h4 style="font-size:.85rem;font-weight:600;margin:.5rem 0 .25rem;color:var(--ac)">$1</h4>')
+    .replace(/^## (.+)$/gm, '<h3 style="font-size:.9rem;font-weight:600;margin:.5rem 0 .25rem;color:var(--ac)">$1</h3>')
+    .replace(/^# (.+)$/gm, '<h2 style="font-size:1rem;font-weight:700;margin:.5rem 0 .25rem">$1</h2>')
+    .replace(/^> (.+)$/gm, '<blockquote>$1</blockquote>')
+    .replace(/^[-*] (.+)$/gm, '<li>$1</li>')
+    .replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>')
     .replace(/\n/g, '<br>');
 }

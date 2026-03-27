@@ -1,0 +1,16 @@
+{
+  "name": "DMlog.ai",
+  "short_name": "DMlog",
+  "description": "AI-powered D&D dungeon master with persistent memory",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0d1117",
+  "theme_color": "#58a6ff",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%230d1117' width='100' height='100' rx='20'/><text x='50' y='68' font-size='60' text-anchor='middle'>🏰</text></svg>",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}
