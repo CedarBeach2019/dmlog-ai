@@ -93,8 +93,10 @@ export function Chat() {
       body: JSON.stringify(body),
     });
     if (!res.ok) {
-      const err = await res.text();
-      throw new Error(err || `HTTP ${res.status}`);
+      const errText = await res.text().catch(() => '');
+      let errMsg = `HTTP ${res.status}`;
+      try { const errJson = JSON.parse(errText); errMsg = errJson.error?.message || errMsg; } catch {}
+      throw new Error(errMsg);
     }
     const reader = res.body.getReader();
     const decoder = new TextDecoder();
@@ -142,7 +144,7 @@ export function Chat() {
       }]);
     } catch (err) {
       const msg = err.message || '';
-      if (msg.includes('guest_limit') || msg.includes('429')) {
+      if (msg.includes('Guest limit') || msg.includes('guest_limit')) {
         // Guest limit reached — prompt to sign up
         setMessages(prev => [...prev, {
           role: 'system', content: 'GUEST_LIMIT', ts: Date.now(),
