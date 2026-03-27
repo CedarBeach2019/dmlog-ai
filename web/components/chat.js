@@ -137,6 +137,11 @@ export function Chat() {
       const chatMessages = [...messages, userMsg].map(m => ({ role: m.role, content: m.content }));
       const body = { messages: chatMessages, stream: true };
       if (sid) body.session_id = sid;
+      // Inject character context from quickstart (send once, then clear)
+      try {
+        const charStr = sessionStorage.getItem('lo-character');
+        if (charStr) { body.character = JSON.parse(charStr); sessionStorage.removeItem('lo-character'); }
+      } catch {}
       const result = await streamResponse('/v1/chat/completions', body);
       sessionUpdated.value++;
       setMessages(prev => [...prev, {

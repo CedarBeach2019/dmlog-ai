@@ -62,6 +62,20 @@ chatApp.post('/completions', async (c) => {
   let dmSystemPrompt = null;
   if (!systemMsg) {
     dmSystemPrompt = await getSystemPrompt(c.env);
+    // Inject character context if provided
+    if (body.character) {
+      const char = body.character as { name?: string; class?: string; world?: string; icon?: string; stats?: Record<string, number> };
+      if (char.name || char.class) {
+        const charBlock = [];
+        charBlock.push(`The player is ${char.name || 'the adventurer'}, a level 1 ${char.class || 'adventurer'}.`);
+        if (char.stats) {
+          const s = char.stats;
+          charBlock.push(`Stats: STR ${s.str||10}, DEX ${s.dex||10}, CON ${s.con||10}, INT ${s.int||10}, WIS ${s.wis||10}, CHA ${s.cha||10}`);
+        }
+        if (char.world) charBlock.push(`The world is "${char.world}".`);
+        dmSystemPrompt += '\n\n' + charBlock.join(' ');
+      }
+    }
   }
 
   let dehydratedMessages: ProviderMessage[] = [];
