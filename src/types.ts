@@ -191,6 +191,8 @@ export interface ChatRequest {
   top_p?: number;
   stop?: string[];
   stream?: boolean;
+  session_id?: string;
+  character?: { name?: string; class?: string; world?: string; icon?: string; stats?: Record<string, number> };
 }
 
 export interface ChatResponse {
