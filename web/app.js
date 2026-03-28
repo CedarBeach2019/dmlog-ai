@@ -37,6 +37,22 @@ useEffect(() => {
   }
 }, []);
 
+// Central token getter: localStorage (persisted login) > sessionStorage (guest) > authState
+export function getToken() {
+  return localStorage.getItem('lo-token') || sessionStorage.getItem('lo-token') || authState.value.token || '';
+}
+
+// Auto-login from persisted token
+const savedToken = getToken();
+if (savedToken) {
+  authState.value = {
+    isLoggedIn: true,
+    token: savedToken,
+    userId: localStorage.getItem('lo-userid') || null,
+    isGuest: !!sessionStorage.getItem('lo-guest'),
+  };
+}
+
 // Keyboard shortcuts
 document.addEventListener('keydown', (e) => {
   if (e.ctrlKey && e.key === 'b') { e.preventDefault(); sidebarOpen.value = !sidebarOpen.value; }

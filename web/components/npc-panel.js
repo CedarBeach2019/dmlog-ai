@@ -1,5 +1,5 @@
 import { html, useState, useEffect } from '../preact-shim.js';
-import { authState, sessionUpdated, addToast } from '../app.js';
+import { authState, sessionUpdated, addToast, getToken } from '../app.js';
 
 export function NPCPanel() {
   const [npcs, setNpcs] = useState([]);
@@ -7,7 +7,6 @@ export function NPCPanel() {
   const [expanded, setExpanded] = useState(null);
   const [open, setOpen] = useState(true);
   const [character, setCharacter] = useState(null);
-  const getToken = () => sessionStorage.getItem('lo-token') || authState.value.token;
 
   // Load saved character from session storage
   useEffect(() => {

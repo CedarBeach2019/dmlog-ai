@@ -1,10 +1,10 @@
 import { html, useState } from '../preact-shim.js';
 import { MessageContent } from './message-content.js';
-import { authState, addToast } from '../app.js';
+import { authState, addToast, getToken } from '../app.js';
 
 function sendFeedback(interactionId, sentiment) {
   if (!interactionId) return;
-  const token = sessionStorage.getItem('lo-token') || authState.value.token;
+  const token = getToken();
   fetch(`/v1/chat/interactions/${interactionId}/feedback`, {
     method: 'PATCH',
     headers: {

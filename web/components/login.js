@@ -1,5 +1,5 @@
 import { html, useState, useEffect } from '../preact-shim.js';
-import { authState, addToast } from '../app.js';
+import { authState, addToast, getToken } from '../app.js';
 
 const CLASSES = [
   { name: 'Fighter', icon: '⚔️', desc: 'Martial prowess, heavy armor, weapon mastery', hp: 10, stats: { str: 16, dex: 12, con: 14, int: 10, wis: 12, cha: 10 } },
@@ -24,8 +24,6 @@ export function QuickStart() {
   const [charName, setCharName] = useState('');
   const [loading, setLoading] = useState(false);
   const [firstResponse, setFirstResponse] = useState('');
-  const getToken = () => sessionStorage.getItem('lo-token') || authState.value.token;
-
   const ensureToken = async () => {
     if (getToken()) return;
     try {
@@ -190,8 +188,13 @@ export function Login() {
 
   const storeToken = (data) => {
     const token = data.token || data.accessToken || data.access_token;
-    sessionStorage.setItem('lo-token', token);
-    sessionStorage.setItem('lo-guest', data.guest ? '1' : '');
+    if (data.guest) {
+      sessionStorage.setItem('lo-token', token);
+      sessionStorage.setItem('lo-guest', '1');
+    } else {
+      localStorage.setItem('lo-token', token);
+      localStorage.setItem('lo-userid', data.userId || data.user_id || '');
+    }
     authState.value = {
       isLoggedIn: true,
       token,

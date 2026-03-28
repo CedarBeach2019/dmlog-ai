@@ -4,7 +4,7 @@ import { MessageContent } from './message-content.js';
 import { DraftPanel } from './draft-panel.js';
 import { DiceRoller, rollResults } from './dice-roller.js';
 import { CharacterStats } from './character-stats.js';
-import { authState, theme, sidebarOpen, currentSessionId, sessionUpdated, loadSessionSignal, settingsOpen, analyticsOpen, addToast } from '../app.js';
+import { authState, theme, sidebarOpen, currentSessionId, sessionUpdated, loadSessionSignal, settingsOpen, analyticsOpen, addToast, getToken } from '../app.js';
 
 export function Chat() {
   const [messages, setMessages] = useState([]);
@@ -19,7 +19,6 @@ export function Chat() {
   const listRef = useRef(null);
   const textareaRef = useRef(null);
 
-  const getToken = () => sessionStorage.getItem('lo-token') || authState.value.token;
 
   // Watch for session load requests from sidebar
   useEffect(() => {
@@ -185,6 +184,17 @@ export function Chat() {
     setInput('');
   };
 
+  const handleLogout = () => {
+    localStorage.removeItem('lo-token');
+    localStorage.removeItem('lo-userid');
+    sessionStorage.removeItem('lo-token');
+    sessionStorage.removeItem('lo-guest');
+    sessionStorage.removeItem('lo-character');
+    sessionStorage.removeItem('lo-session');
+    authState.value = { isLoggedIn: false, token: null, userId: null };
+    addToast('Signed out');
+  };
+
   const sendDraft = async (text) => {
     if (!text.trim()) return;
     setDraftMode(true);
@@ -193,7 +203,7 @@ export function Chat() {
     setMessages(prev => [...prev, userMsg]);
     setInput('');
 
-    const token = sessionStorage.getItem('lo-token') || authState.value.token;
+    const token = getToken();
     try {
       const sid = await ensureSession();
       const chatMessages = [...messages, userMsg].map(m => ({ role: m.role, content: m.content }));
@@ -224,7 +234,7 @@ export function Chat() {
       interactionId: draft.id, routeAction: draft.profile, ts: Date.now(),
     }]);
     // Record winner for routing optimization
-    const token = sessionStorage.getItem('lo-token') || authState.value.token;
+    const token = getToken();
     fetch(`/v1/drafts/winner/${draft.id}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
@@ -246,6 +256,7 @@ export function Chat() {
           <button onclick=${handleNewChat} title="New adventure" class="icon-btn">+ New</button>
           <button onclick=${() => theme.value = theme.value === 'dark' ? 'light' : 'dark'} class="icon-btn">${theme.value === 'dark' ? '☀️' : '🌙'}</button>
           <button onclick=${() => settingsOpen.value = true} class="icon-btn">⚙</button>
+          <button onclick=${handleLogout} title="Sign out" class="icon-btn">🚪</button>
         </div>
       </div>
       <${CharacterStats} />

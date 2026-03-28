@@ -1,5 +1,5 @@
 import { html, useState, useEffect } from '../preact-shim.js';
-import { sidebarOpen, sessionUpdated, loadSessionSignal, addToast } from '../app.js';
+import { sidebarOpen, sessionUpdated, loadSessionSignal, addToast, getToken } from '../app.js';
 
 export function Sidebar() {
   const [sessionList, setSessionList] = useState([]);
@@ -9,7 +9,6 @@ export function Sidebar() {
   const [activeId, setActiveId] = useState(null);
   const [search, setSearch] = useState('');
 
-  const getToken = () => sessionStorage.getItem('lo-token');
 
   const filtered = search.trim()
     ? sessionList.filter(s =>

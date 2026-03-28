@@ -1,5 +1,5 @@
 import { html, useState, useEffect } from '../preact-shim.js';
-import { authState, addToast } from '../app.js';
+import { authState, addToast, getToken } from '../app.js';
 
 function OverviewTab({ summary }) {
   if (!summary) return html`<div class="analytics-empty">No data yet.</div>`;
@@ -95,7 +95,6 @@ export function Analytics() {
   const [summary, setSummary] = useState(null);
   const [routes, setRoutes] = useState(null);
   const [loading, setLoading] = useState(false);
-  const getToken = () => sessionStorage.getItem('lo-token') || authState.value.token;
 
   const fetchData = async () => {
     const token = getToken();
