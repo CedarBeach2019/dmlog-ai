@@ -49,8 +49,8 @@ protectedApi.use('*', authMiddleware);
 protectedApi.route('/chat', chatRoutes);
 protectedApi.route('/drafts', draftRoutes);
 protectedApi.route('/sessions', sessionRoutes);
+protectedApi.route('/sessions/:id/export', exportRoutes);
 protectedApi.route('/preferences', preferencesRoutes);
-protectedApi.route('/export', exportRoutes);
 protectedApi.route('/analytics', analyticsRoutes);
 app.route('/v1', protectedApi);
 
