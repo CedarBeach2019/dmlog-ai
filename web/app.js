@@ -1,16 +1,4 @@
-// Global error handler — show errors on screen instead of blank page
-window.onerror = (msg, src, line, col, err) => {
-  const el = document.getElementById('app');
-  if (el) {
-    el.innerHTML = `<div style="padding:2rem;color:#f85149;font-family:monospace;white-space:pre-wrap">
-<div style="font-size:1.2rem;margin-bottom:1rem">⚠️ Runtime Error</div>
-<div>${msg}</div>
-${src ? `<div style="color:#8b949e;margin-top:.5rem">${src}:${line}:${col}</div>` : ''}
-</div>`;
-  }
-  console.error('App error:', err || msg);
-};
-
+// Remove window.onerror (handled in index.html)
 import { render, signal, useEffect, html } from './preact-shim.js';
 import { Login } from './components/login.js';
 import { Chat } from './components/chat.js';
@@ -63,7 +51,7 @@ function addToast(msg, type = 'info') {
 }
 export { addToast };
 
-function App() {
+export default function App() {
   return html`
     <div class="app">
       ${authState.value.isLoggedIn ? html`
@@ -83,4 +71,4 @@ function App() {
   `;
 }
 
-render(html`<${App} />`, document.getElementById('app'));
+
