@@ -265,6 +265,11 @@ select{font:inherit;background:var(--bg1);color:var(--t1);border:1px solid var(-
   .message{max-width:92%}
   .draft-panel{grid-template-columns:1fr}
   .npc-panel{display:none}
+  .actions{gap:.25rem}
+  .actions .icon-btn{font-size:.8rem;padding:.2rem .35rem}
+  .chat-title{font-size:var(--fs);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .analytics-panel{width:95vw;max-height:85vh}
+  .analytics-grid{grid-template-columns:repeat(2,1fr)}
 }
 @media(max-width:600px){
   .world-grid{grid-template-columns:1fr}
@@ -272,6 +277,8 @@ select{font:inherit;background:var(--bg1);color:var(--t1);border:1px solid var(-
   .login-card{width:100%;max-width:340px}
   .empty-prompts{flex-direction:column;align-items:center}
   .prompt-chip{width:100%;max-width:220px;text-align:center}
+  .chat-input-wrap{padding:.5rem;padding-bottom:calc(.5rem + env(safe-area-inset-bottom, 0px))}
+  .chat-header{padding:.4rem .5rem}
 }
 
 /* ─── Character Stats Bar ────────────────────────────────────────────────── */
