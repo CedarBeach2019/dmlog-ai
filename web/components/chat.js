@@ -2,6 +2,8 @@ import { html, useState, useRef, useEffect } from '../preact-shim.js';
 import { Message } from './message.js';
 import { MessageContent } from './message-content.js';
 import { DraftPanel } from './draft-panel.js';
+import { DiceRoller, rollResults } from './dice-roller.js';
+import { CharacterStats } from './character-stats.js';
 import { authState, theme, sidebarOpen, currentSessionId, sessionUpdated, loadSessionSignal, settingsOpen, addToast } from '../app.js';
 
 export function Chat() {
@@ -13,6 +15,7 @@ export function Chat() {
   const [streamingContent, setStreamingContent] = useState('');
   const [activeSessionId, setActiveSessionId] = useState(null);
   const [loadingSession, setLoadingSession] = useState(false);
+  const [showDice, setShowDice] = useState(false);
   const listRef = useRef(null);
   const textareaRef = useRef(null);
 
@@ -237,12 +240,14 @@ export function Chat() {
         <button onclick=${() => sidebarOpen.value = !sidebarOpen.value}>☰</button>
         <div class="chat-title">${activeSessionId ? '🏰 Adventure' : '🏰 DMlog.ai'}</div>
         <div class="actions">
+          <button onclick=${() => setShowDice(!showDice)} title="Dice roller" class="icon-btn">🎲</button>
           <button onclick=${() => setDraftMode(!draftMode)} title="Compare responses" class="icon-btn">${draftMode ? '✕' : '🎯'}</button>
           <button onclick=${handleNewChat} title="New adventure" class="icon-btn">+ New</button>
           <button onclick=${() => theme.value = theme.value === 'dark' ? 'light' : 'dark'} class="icon-btn">${theme.value === 'dark' ? '☀️' : '🌙'}</button>
           <button onclick=${() => settingsOpen.value = true} class="icon-btn">⚙</button>
         </div>
       </div>
+      <${CharacterStats} />
       ${draftMode && drafts.length > 0 ? html`
         <${DraftPanel} drafts=${drafts} onPick=${pickDraft} onClose=${() => setDraftMode(false)} />
       ` : html`
@@ -284,6 +289,7 @@ export function Chat() {
         </div>
       `}
       <div class="input-area">
+        ${showDice && html`<div class="dice-roller-popup"><${DiceRoller} /></div>`}
         <div class="input-row">
           <textarea ref=${textareaRef} placeholder="Type a message… (Enter to send)"
             value=${input} onInput=${handleInput} onKeyDown=${handleKeyDown}

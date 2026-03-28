@@ -14,6 +14,8 @@ import draftRoutes from './routes/drafts.js';
 import sessionRoutes from './routes/sessions.js';
 import healthRoutes from './routes/health.js';
 import preferencesRoutes from './routes/preferences.js';
+import exportRoutes from './routes/export.js';
+import analyticsRoutes from './routes/analytics.js';
 import { rateLimitMiddleware } from './middleware/rate-limit.js';
 import { requestLogger } from '../src/middleware/request-logger.js';
 
@@ -48,6 +50,8 @@ protectedApi.route('/chat', chatRoutes);
 protectedApi.route('/drafts', draftRoutes);
 protectedApi.route('/sessions', sessionRoutes);
 protectedApi.route('/preferences', preferencesRoutes);
+protectedApi.route('/export', exportRoutes);
+protectedApi.route('/analytics', analyticsRoutes);
 app.route('/v1', protectedApi);
 
 app.get('/', (c) => c.json({ name: 'dmlog-ai', version: '0.1.0' }));

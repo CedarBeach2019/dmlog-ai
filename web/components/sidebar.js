@@ -76,6 +76,30 @@ export function Sidebar() {
     }
   };
 
+  const handleExport = async (id, e) => {
+    e.stopPropagation();
+    try {
+      const res = await fetch(`/v1/sessions/${id}/export?format=md`, {
+        headers: { Authorization: `Bearer ${getToken()}` },
+      });
+      if (!res.ok) throw new Error(`${res.status}`);
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      const cd = res.headers.get('Content-Disposition') || '';
+      const match = cd.match(/filename="(.+)"/);
+      a.download = match ? match[1] : `session-${id.slice(0, 8)}.md`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      addToast('Session exported');
+    } catch (err) {
+      addToast('Export failed: ' + err.message, 'error');
+    }
+  };
+
   const formatTime = (ts) => {
     if (!ts) return '';
     const diffMins = Math.floor((Date.now() - new Date(ts)) / 60000);
@@ -122,6 +146,7 @@ export function Sidebar() {
             ${recapId === s.id && recap ? html`<div class="session-recap">${recap}</div>` : null}
             <div class="session-actions">
               <button class="action-btn" onclick=${(e) => handleRecap(s.id, e)} title="Recap">📝</button>
+              <button class="action-btn" onclick=${(e) => handleExport(s.id, e)} title="Export">📥</button>
               <button class="action-btn delete" onclick=${(e) => handleDelete(s.id, e)} title="Delete">🗑</button>
             </div>
           </div>
