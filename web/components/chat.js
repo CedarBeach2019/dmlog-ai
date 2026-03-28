@@ -54,8 +54,16 @@ export function Chat() {
     }
   };
 
+  const scrollToBottom = () => {
+    const el = listRef.current;
+    if (el) {
+      const nearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 100;
+      if (nearBottom) el.scrollTop = el.scrollHeight;
+    }
+  };
+
   useEffect(() => {
-    if (listRef.current) listRef.current.scrollTop = listRef.current.scrollHeight;
+    scrollToBottom();
   }, [messages, streamingContent]);
 
   const handleInput = (e) => {
