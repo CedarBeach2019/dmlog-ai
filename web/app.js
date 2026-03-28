@@ -5,6 +5,7 @@ import { Sidebar } from './components/sidebar.js';
 import { Settings } from './components/settings.js';
 import { NPCPanel } from './components/npc-panel.js';
 
+import { Analytics } from './analytics.js';
 // Global state
 export const authState = signal({ isLoggedIn: false, token: null, userId: null });
 export const theme = signal(localStorage.getItem('lo-theme') || 'dark');
@@ -16,6 +17,7 @@ export const sessionUpdated = signal(0);
 export const loadSessionSignal = signal(null);
 export const toasts = signal([]);
 export const overlay = signal(null);
+export const analyticsOpen = signal(false);
 
 // Theme sync
 useEffect(() => {
@@ -60,6 +62,7 @@ function App() {
         </div>
       ` : html`<${Login} />`}
       <${Settings} />
+      <${Analytics} />
       <div class="toast-container">
         ${toasts.value.map(t => html`<div class="toast">${t.msg}</div>`)}
       </div>

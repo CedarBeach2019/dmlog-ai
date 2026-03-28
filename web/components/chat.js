@@ -4,7 +4,7 @@ import { MessageContent } from './message-content.js';
 import { DraftPanel } from './draft-panel.js';
 import { DiceRoller, rollResults } from './dice-roller.js';
 import { CharacterStats } from './character-stats.js';
-import { authState, theme, sidebarOpen, currentSessionId, sessionUpdated, loadSessionSignal, settingsOpen, addToast } from '../app.js';
+import { authState, theme, sidebarOpen, currentSessionId, sessionUpdated, loadSessionSignal, settingsOpen, analyticsOpen, addToast } from '../app.js';
 
 export function Chat() {
   const [messages, setMessages] = useState([]);
@@ -242,6 +242,7 @@ export function Chat() {
         <div class="actions">
           <button onclick=${() => setShowDice(!showDice)} title="Dice roller" class="icon-btn">🎲</button>
           <button onclick=${() => setDraftMode(!draftMode)} title="Compare responses" class="icon-btn">${draftMode ? '✕' : '🎯'}</button>
+          <button onclick=${() => analyticsOpen.value = true} title="Analytics" class="icon-btn">📊</button>
           <button onclick=${handleNewChat} title="New adventure" class="icon-btn">+ New</button>
           <button onclick=${() => theme.value = theme.value === 'dark' ? 'light' : 'dark'} class="icon-btn">${theme.value === 'dark' ? '☀️' : '🌙'}</button>
           <button onclick=${() => settingsOpen.value = true} class="icon-btn">⚙</button>
