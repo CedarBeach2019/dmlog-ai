@@ -35,7 +35,7 @@ function renderMarkdown(text) {
   html_text = html_text.replace(/^[-*] (.+)$/gm, ':::li:::$1:::/eli:::');
 
   // Wrap consecutive list items in <ul>
-  html_text = html_text.replace(/(:::li:::(?:.*?:::/eli:::)\s*)+/gs, (match) => {
+  html_text = html_text.replace(/(:::li:::(?:[\s\S]*?:::\/eli:::)\s*)+/g, (match) => {
     const items = match.replace(/:::li:::/g, '<li>').replace(/:::\/eli:::/g, '</li>');
     return '<ul>' + items + '</ul>';
   });
