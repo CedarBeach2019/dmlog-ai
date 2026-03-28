@@ -1,5 +1,5 @@
 // ─── Character Stats Bar Component (Preact + HTM) ──────────────────────────
-import { html, useState, signal } from '../preact-shim.js';
+import { html, useState } from '../preact-shim.js';
 
 const ABILITY_ORDER = ['str', 'dex', 'con', 'int', 'wis', 'cha'];
 const ABILITY_NAMES = { str: 'STR', dex: 'DEX', con: 'CON', int: 'INT', wis: 'WIS', cha: 'CHA' };

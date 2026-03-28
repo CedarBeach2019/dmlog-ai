@@ -1,5 +1,5 @@
 // ─── Dice Roller Component (Preact + HTM) ────────────────────────────────────
-import { html, Component, signal, computed } from '../preact-shim.js';
+import { html, signal, computed } from '../preact-shim.js';
 
 const DICE_TYPES = [
   { sides: 4, label: 'd4', shape: 'tetra' },

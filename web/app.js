@@ -5,7 +5,7 @@ import { Sidebar } from './components/sidebar.js';
 import { Settings } from './components/settings.js';
 import { NPCPanel } from './components/npc-panel.js';
 
-import { Analytics } from './analytics.js';
+import { Analytics } from './components/analytics.js';
 // Global state
 export const authState = signal({ isLoggedIn: false, token: null, userId: null });
 export const theme = signal(localStorage.getItem('lo-theme') || 'dark');
