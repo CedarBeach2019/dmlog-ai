@@ -1,0 +1,923 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DMLog.ai — Your AI Dungeon Master</title>
+  <meta name="description" content="An AI-powered Dungeon Master that remembers your choices, evolves your world, and brings your TTRPG campaigns to life.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700;800;900&family=Crimson+Text:ital,wght@0,400;0,600;0,700;1,400;1,600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-deep: #0a0a0a;
+      --bg-surface: #111111;
+      --bg-card: #161616;
+      --bg-elevated: #1c1c1c;
+      --gold: #c9a23c;
+      --gold-light: #e2c06a;
+      --gold-dark: #a07e28;
+      --gold-muted: rgba(201, 162, 60, 0.15);
+      --gold-glow: rgba(201, 162, 60, 0.3);
+      --text-primary: #e8e0d0;
+      --text-secondary: #a09888;
+      --text-muted: #6b6157;
+      --border-gold: rgba(201, 162, 60, 0.25);
+      --border-subtle: rgba(255, 255, 255, 0.06);
+      --font-heading: 'Cinzel', serif;
+      --font-body: 'Crimson Text', serif;
+      --max-width: 1140px;
+      --section-padding: 100px 0;
+    }
+
+    *, *::before, *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: var(--font-body);
+      background-color: var(--bg-deep);
+      color: var(--text-primary);
+      font-size: 18px;
+      line-height: 1.7;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* Parchment texture overlay */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 0;
+      background:
+        radial-gradient(ellipse at 20% 50%, rgba(201, 162, 60, 0.03) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 20%, rgba(201, 162, 60, 0.02) 0%, transparent 50%),
+        radial-gradient(ellipse at 50% 80%, rgba(139, 90, 43, 0.02) 0%, transparent 50%);
+    }
+
+    /* Utility */
+    .container {
+      max-width: var(--max-width);
+      margin: 0 auto;
+      padding: 0 24px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Navigation */
+    nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      padding: 16px 0;
+      transition: background 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    nav.scrolled {
+      background: rgba(10, 10, 10, 0.95);
+      backdrop-filter: blur(12px);
+      box-shadow: 0 1px 0 var(--border-gold);
+    }
+
+    nav .container {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .nav-brand {
+      font-family: var(--font-heading);
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--gold);
+      text-decoration: none;
+      letter-spacing: 2px;
+    }
+
+    .nav-brand span {
+      color: var(--text-primary);
+      font-weight: 400;
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 32px;
+      list-style: none;
+    }
+
+    .nav-links a {
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 15px;
+      font-family: var(--font-heading);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      transition: color 0.2s;
+    }
+
+    .nav-links a:hover {
+      color: var(--gold);
+    }
+
+    .nav-cta {
+      display: inline-block;
+      padding: 10px 24px;
+      background: var(--gold);
+      color: var(--bg-deep) !important;
+      border-radius: 4px;
+      font-weight: 600;
+      font-size: 13px;
+      letter-spacing: 1.5px;
+      transition: background 0.2s, transform 0.2s;
+    }
+
+    .nav-cta:hover {
+      background: var(--gold-light);
+      transform: translateY(-1px);
+    }
+
+    /* Hero */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 120px 24px 80px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background:
+        radial-gradient(ellipse at center top, rgba(201, 162, 60, 0.08) 0%, transparent 60%),
+        radial-gradient(ellipse at center bottom, rgba(10, 10, 10, 0.5) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .hero::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 200px;
+      background: linear-gradient(to bottom, transparent, var(--bg-deep));
+      pointer-events: none;
+    }
+
+    .hero-content {
+      max-width: 800px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .hero-eyebrow {
+      font-family: var(--font-heading);
+      font-size: 13px;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 24px;
+      opacity: 0.8;
+    }
+
+    .hero h1 {
+      font-family: var(--font-heading);
+      font-size: clamp(36px, 6vw, 64px);
+      font-weight: 800;
+      line-height: 1.15;
+      color: var(--text-primary);
+      margin-bottom: 24px;
+    }
+
+    .hero h1 .gold {
+      color: var(--gold);
+    }
+
+    .hero-subtitle {
+      font-size: clamp(18px, 2.5vw, 22px);
+      color: var(--text-secondary);
+      max-width: 600px;
+      margin: 0 auto 48px;
+      line-height: 1.6;
+    }
+
+    .hero-actions {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .btn-primary {
+      display: inline-block;
+      padding: 16px 40px;
+      background: var(--gold);
+      color: var(--bg-deep);
+      font-family: var(--font-heading);
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      text-decoration: none;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
+    }
+
+    .btn-primary:hover {
+      background: var(--gold-light);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 32px rgba(201, 162, 60, 0.3);
+    }
+
+    .btn-secondary {
+      display: inline-block;
+      padding: 16px 40px;
+      background: transparent;
+      color: var(--gold);
+      font-family: var(--font-heading);
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      text-decoration: none;
+      border: 1px solid var(--border-gold);
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background 0.2s, border-color 0.2s, transform 0.2s;
+    }
+
+    .btn-secondary:hover {
+      background: var(--gold-muted);
+      border-color: var(--gold);
+      transform: translateY(-2px);
+    }
+
+    /* Divider */
+    .divider {
+      width: 80px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--gold), transparent);
+      margin: 0 auto;
+    }
+
+    /* Section shared */
+    section {
+      padding: var(--section-padding);
+      position: relative;
+      z-index: 1;
+    }
+
+    .section-header {
+      text-align: center;
+      margin-bottom: 64px;
+    }
+
+    .section-header h2 {
+      font-family: var(--font-heading);
+      font-size: clamp(28px, 4vw, 42px);
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 16px;
+    }
+
+    .section-header p {
+      font-size: 18px;
+      color: var(--text-secondary);
+      max-width: 560px;
+      margin: 0 auto;
+    }
+
+    /* Features */
+    .features {
+      border-top: 1px solid var(--border-gold);
+      border-bottom: 1px solid var(--border-gold);
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 32px;
+    }
+
+    .feature-card {
+      padding: 40px 32px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      transition: border-color 0.3s, transform 0.3s, box-shadow 0.3s;
+    }
+
+    .feature-card:hover {
+      border-color: var(--border-gold);
+      transform: translateY(-4px);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+    }
+
+    .feature-icon {
+      width: 56px;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      margin-bottom: 20px;
+      border: 1px solid var(--border-gold);
+      border-radius: 8px;
+      background: var(--gold-muted);
+      color: var(--gold);
+    }
+
+    .feature-card h3 {
+      font-family: var(--font-heading);
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 12px;
+      letter-spacing: 0.5px;
+    }
+
+    .feature-card p {
+      font-size: 16px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+
+    /* Steps */
+    .steps {
+      background: var(--bg-surface);
+    }
+
+    .steps-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 40px;
+      position: relative;
+    }
+
+    .steps-grid::before {
+      content: '';
+      position: absolute;
+      top: 48px;
+      left: 16.66%;
+      right: 16.66%;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--border-gold), var(--border-gold), transparent);
+    }
+
+    .step {
+      text-align: center;
+      position: relative;
+    }
+
+    .step-number {
+      width: 96px;
+      height: 96px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 28px;
+      border: 2px solid var(--border-gold);
+      border-radius: 50%;
+      font-family: var(--font-heading);
+      font-size: 32px;
+      font-weight: 700;
+      color: var(--gold);
+      background: var(--bg-deep);
+      position: relative;
+      z-index: 2;
+    }
+
+    .step h3 {
+      font-family: var(--font-heading);
+      font-size: 22px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 8px;
+      letter-spacing: 0.5px;
+    }
+
+    .step p {
+      font-size: 16px;
+      color: var(--text-secondary);
+      max-width: 280px;
+      margin: 0 auto;
+    }
+
+    /* Demo */
+    .demo {
+      border-top: 1px solid var(--border-gold);
+    }
+
+    .demo-container {
+      max-width: 780px;
+      margin: 0 auto;
+      background: var(--bg-card);
+      border: 1px solid var(--border-gold);
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 8px 48px rgba(0, 0, 0, 0.4);
+    }
+
+    .demo-titlebar {
+      padding: 14px 20px;
+      background: var(--bg-elevated);
+      border-bottom: 1px solid var(--border-subtle);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .demo-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--text-muted);
+    }
+
+    .demo-dot:first-child { background: #e05050; }
+    .demo-dot:nth-child(2) { background: #e0b040; }
+    .demo-dot:nth-child(3) { background: #40b040; }
+
+    .demo-titlebar span {
+      margin-left: 12px;
+      font-family: var(--font-heading);
+      font-size: 13px;
+      color: var(--text-muted);
+      letter-spacing: 1px;
+    }
+
+    .demo-content {
+      padding: 32px;
+    }
+
+    .demo-line {
+      margin-bottom: 24px;
+    }
+
+    .demo-line:last-child {
+      margin-bottom: 0;
+    }
+
+    .demo-dm {
+      padding-left: 20px;
+      border-left: 3px solid var(--gold-dark);
+      color: var(--text-secondary);
+      font-style: italic;
+      font-size: 17px;
+    }
+
+    .demo-dm .dm-label {
+      display: block;
+      font-family: var(--font-heading);
+      font-style: normal;
+      font-size: 12px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 6px;
+    }
+
+    .demo-player {
+      padding-left: 20px;
+      border-left: 3px solid #6b8a6b;
+      color: var(--text-primary);
+      font-size: 17px;
+    }
+
+    .demo-player .player-label {
+      display: block;
+      font-family: var(--font-heading);
+      font-size: 12px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #8ab88a;
+      margin-bottom: 6px;
+    }
+
+    .demo-roll {
+      display: inline-block;
+      padding: 4px 12px;
+      background: var(--gold-muted);
+      border: 1px solid var(--border-gold);
+      border-radius: 4px;
+      font-family: var(--font-heading);
+      font-size: 13px;
+      color: var(--gold);
+      letter-spacing: 1px;
+    }
+
+    .demo-divider {
+      height: 1px;
+      background: var(--border-subtle);
+      margin: 24px 0;
+    }
+
+    /* Open Source */
+    .opensource {
+      text-align: center;
+      border-top: 1px solid var(--border-gold);
+      border-bottom: 1px solid var(--border-gold);
+    }
+
+    .opensource h2 {
+      font-family: var(--font-heading);
+      font-size: clamp(28px, 4vw, 42px);
+      font-weight: 700;
+      margin-bottom: 16px;
+    }
+
+    .opensource p {
+      color: var(--text-secondary);
+      max-width: 560px;
+      margin: 0 auto 32px;
+      font-size: 18px;
+    }
+
+    .opensource .license {
+      display: inline-block;
+      padding: 8px 20px;
+      border: 1px solid var(--border-gold);
+      border-radius: 4px;
+      font-family: var(--font-heading);
+      font-size: 13px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 32px;
+    }
+
+    /* Footer */
+    footer {
+      padding: 48px 0;
+      text-align: center;
+      border-top: 1px solid var(--border-subtle);
+    }
+
+    footer p {
+      font-size: 15px;
+      color: var(--text-muted);
+    }
+
+    footer a {
+      color: var(--gold-dark);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    footer a:hover {
+      color: var(--gold);
+    }
+
+    footer .footer-links {
+      margin-top: 12px;
+    }
+
+    footer .footer-links a {
+      margin: 0 16px;
+      font-size: 14px;
+    }
+
+    /* Animations */
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(24px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .animate-in {
+      opacity: 0;
+      transform: translateY(24px);
+      transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+
+    .animate-in.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* Responsive */
+    @media (max-width: 960px) {
+      .features-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .steps-grid::before {
+        display: none;
+      }
+    }
+
+    @media (max-width: 720px) {
+      :root {
+        --section-padding: 72px 0;
+      }
+
+      .nav-links {
+        display: none;
+      }
+
+      .features-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .steps-grid {
+        grid-template-columns: 1fr;
+        gap: 48px;
+      }
+
+      .hero h1 {
+        font-size: 32px;
+      }
+
+      .hero-subtitle {
+        font-size: 18px;
+      }
+
+      .hero-actions {
+        flex-direction: column;
+        width: 100%;
+      }
+
+      .hero-actions a {
+        width: 100%;
+        text-align: center;
+      }
+
+      .demo-content {
+        padding: 20px;
+      }
+
+      .feature-card {
+        padding: 28px 24px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      body {
+        font-size: 16px;
+      }
+
+      .hero {
+        padding: 100px 16px 60px;
+      }
+
+      .step-number {
+        width: 72px;
+        height: 72px;
+        font-size: 26px;
+      }
+
+      .section-header h2 {
+        font-size: 26px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navigation -->
+  <nav id="nav">
+    <div class="container">
+      <a href="#" class="nav-brand">DMLog<span>.ai</span></a>
+      <ul class="nav-links">
+        <li><a href="#features">Features</a></li>
+        <li><a href="#how-it-works">How It Works</a></li>
+        <li><a href="#demo">Demo</a></li>
+        <li><a href="app.html" class="nav-cta">Enter the Tavern</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="hero-content">
+      <p class="hero-eyebrow">AI-Powered Tabletop Roleplaying</p>
+      <h1>Your AI Dungeon Master.<br><span class="gold">Living in Your Campaign.</span></h1>
+      <p class="hero-subtitle">Every NPC remembers. Every choice matters. The world evolves.</p>
+      <div class="hero-actions">
+        <a href="app.html" class="btn-primary">Enter the Tavern</a>
+        <a href="#features" class="btn-secondary">Learn More</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features -->
+  <section class="features" id="features">
+    <div class="container">
+      <div class="section-header">
+        <h2>Forge Your Legend</h2>
+        <p>Everything a Dungeon Master should be, running ceaselessly in the background of your campaign.</p>
+      </div>
+      <div class="features-grid">
+
+        <div class="feature-card animate-in">
+          <div class="feature-icon">&#9861;</div>
+          <h3>Dynamic Dice</h3>
+          <p>Fair rolls for every die type with automatic modifiers, advantage, disadvantage, and critical hit detection built in.</p>
+        </div>
+
+        <div class="feature-card animate-in">
+          <div class="feature-icon">&#9733;</div>
+          <h3>Living World</h3>
+          <p>Locations, lore, and history that persist across sessions. Your world grows deeper with every adventure your party undertakes.</p>
+        </div>
+
+        <div class="feature-card animate-in">
+          <div class="feature-icon">&#9876;</div>
+          <h3>Tactical Combat</h3>
+          <p>Initiative tracking, hit point management, status effects, and environmental factors handled with precision and flair.</p>
+        </div>
+
+        <div class="feature-card animate-in">
+          <div class="feature-icon">&#9825;</div>
+          <h3>Rich NPCs</h3>
+          <p>Characters generated with full backstories, evolving motivations, and relationship webs that react to player choices.</p>
+        </div>
+
+        <div class="feature-card animate-in">
+          <div class="feature-icon">&#9872;</div>
+          <h3>Quest System</h3>
+          <p>Track objectives, manage rewards, and face real consequences. Main quests, side stories, and player-driven goals all woven together.</p>
+        </div>
+
+        <div class="feature-card animate-in">
+          <div class="feature-icon">&#9775;</div>
+          <h3>DM Personality</h3>
+          <p>Customize your DM's voice and style through soul.md. Grimdark, whimsical, Shakespearean -- the tone is yours to command.</p>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- How It Works -->
+  <section class="steps" id="how-it-works">
+    <div class="container">
+      <div class="section-header">
+        <h2>Start a Campaign in 60 Seconds</h2>
+        <p>No signup walls. No credit cards. Just your imagination and a terminal.</p>
+      </div>
+      <div class="steps-grid">
+
+        <div class="step animate-in">
+          <div class="step-number">1</div>
+          <h3>Fork</h3>
+          <p>Clone the DMLog.ai repo. Your campaign lives in Git -- fork it and it is yours.</p>
+        </div>
+
+        <div class="step animate-in">
+          <div class="step-number">2</div>
+          <h3>Configure</h3>
+          <p>Edit soul.md to define your DM's personality. Add your LLM key. Set your campaign world.</p>
+        </div>
+
+        <div class="step animate-in">
+          <div class="step-number">3</div>
+          <h3>Play</h3>
+          <p>Open the tavern, roll characters, and begin. The DM handles the rest, remembering everything.</p>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- Demo -->
+  <section class="demo" id="demo">
+    <div class="container">
+      <div class="section-header">
+        <h2>See It In Action</h2>
+        <p>A glimpse into a live campaign session.</p>
+      </div>
+      <div class="demo-container animate-in">
+        <div class="demo-titlebar">
+          <div class="demo-dot"></div>
+          <div class="demo-dot"></div>
+          <div class="demo-dot"></div>
+          <span>DMLog.ai -- Session 4</span>
+        </div>
+        <div class="demo-content">
+
+          <div class="demo-line">
+            <div class="demo-dm">
+              <span class="dm-label">Dungeon Master</span>
+              The tunnel opens into a vast natural cavern. Stalactites drip mineral-rich water into black pools that reflect no light. At the far end, hunched over a crude stone altar, you see a figure draped in tattered gray robes. It mutters in a language you cannot place -- though the cadence is unsettlingly familiar to Theron, given his time among the Exiled. The air smells of copper and burnt sage. A single torch gutters on the wall, casting long shadows that seem to move of their own accord. What do you do?
+            </div>
+          </div>
+
+          <div class="demo-line">
+            <div class="demo-player">
+              <span class="player-label">Theron (Rogue)</span>
+              I want to approach quietly, staying in the shadows along the left wall. Can I tell what the figure is doing at the altar? I am looking for any signs of a ritual or binding circle.
+            </div>
+          </div>
+
+          <div class="demo-line">
+            <div class="demo-dm">
+              <span class="dm-label">Dungeon Master</span>
+              Roll a Stealth check to approach unseen, and a Perception check to decipher the altar work.
+              <br><br>
+              <span class="demo-roll">Stealth (Theron): d20+7 = 19</span>
+              <br>
+              <span class="demo-roll">Perception (Theron): d20+3 = 12</span>
+              <br><br>
+              You move like smoke through the shadows. The figure does not notice you. From fifteen feet away, you can see it is arranging bones -- small ones, possibly from birds or rodents -- into a spiral pattern on the altar surface. This is a binding ward, but an imperfect one. Some of the bones are misplaced, which means either the figure is still learning, or it does not have all the components it needs. The muttering you hear is Old Exile cant, a dialect spoken only by those who spent time in the Eastern penal colonies. This person was imprisoned, like you were, Theron. You recognize the pattern of the ward. It is meant to contain something small. Something living.
+            </div>
+          </div>
+
+          <div class="demo-divider"></div>
+
+          <div class="demo-line">
+            <div class="demo-player">
+              <span class="player-label">Theron (Rogue)</span>
+              I step out of the shadows, hands open at my sides, and say in Old Exile cant: "You are building that ward wrong. The third ring needs thirteen bones, not eleven. Who are you trying to trap?"
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Open Source -->
+  <section class="opensource">
+    <div class="container">
+      <div class="animate-in">
+        <h2>Open Source. Forever.</h2>
+        <p>DMLog.ai is built in the open. Fork it, mod it, self-host it. Your campaign, your rules, your infrastructure. No vendor lock-in. No data harvesting. Your imagination belongs to you.</p>
+        <div class="license">MIT License</div>
+        <div>
+          <a href="app.html" class="btn-primary">Enter the Tavern</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      <p>&copy; 2026 DMLog.ai &mdash; Built on <a href="https://github.com/nickeblewis/cocapn">Cocapn</a></p>
+      <div class="footer-links">
+        <a href="https://github.com/nickeblewis/cocapn">Source Code</a>
+        <a href="app.html">Launch App</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Minimal scroll animation -->
+  <script>
+    // Navbar scroll effect
+    const nav = document.getElementById('nav');
+    window.addEventListener('scroll', function() {
+      if (window.scrollY > 40) {
+        nav.classList.add('scrolled');
+      } else {
+        nav.classList.remove('scrolled');
+      }
+    }, { passive: true });
+
+    // Intersection Observer for fade-in animations
+    const observer = new IntersectionObserver(function(entries) {
+      entries.forEach(function(entry) {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+
+    document.querySelectorAll('.animate-in').forEach(function(el) {
+      observer.observe(el);
+    });
+  </script>
+
+</body>
+</html>
