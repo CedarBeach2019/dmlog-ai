@@ -1,0 +1,27 @@
+{
+  "name": "dmlog-ai",
+  "version": "1.0.0",
+  "description": "AI Dungeon Master — TTRPG Platform",
+  "template": "dmlog",
+  "domain": "dmlog.ai",
+  "channels": ["web", "telegram", "discord"],
+  "brain": {
+    "facts": true,
+    "memories": true,
+    "procedures": true,
+    "relationships": true
+  },
+  "modules": {
+    "game-engine": { "enabled": true },
+    "pathos": { "enabled": true },
+    "logos": { "enabled": true },
+    "ethos": { "enabled": true }
+  },
+  "agents": {
+    "dm": {
+      "soul": "cocapn/soul.md",
+      "mode": "public",
+      "capabilities": ["narrative", "combat", "world-building", "npc-roleplay"]
+    }
+  }
+}

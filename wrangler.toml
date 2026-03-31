@@ -1,0 +1,21 @@
+name = "dmlog-ai"
+main = "src/worker.ts"
+compatibility_date = "2024-01-01"
+
+[vars]
+ENVIRONMENT = "production"
+
+[[kv_namespaces]]
+binding = "WORLD_STATE"
+id = "placeholder-world-state-kv"
+
+[[kv_namespaces]]
+binding = "CAMPAIGNS"
+id = "placeholder-campaigns-kv"
+
+[[kv_namespaces]]
+binding = "SESSIONS"
+id = "placeholder-sessions-kv"
+
+[triggers]
+crons = ["0 */6 * * *"]
