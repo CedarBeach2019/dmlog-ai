@@ -117,9 +117,16 @@ interface NarrativeEntry {
 }
 
 interface ChatRequest {
-  campaignId: string;
+  campaignId?: string;
   message: string;
-  character: string;
+  characterId?: string;
+}
+
+interface CanonFact {
+  subject: string;
+  fact: string;
+  source: string;
+  timestamp: number;
 }
 
 interface LLMMessage {
@@ -440,6 +447,137 @@ function createDefaultWorldState(campaignId: string): WorldState {
 }
 
 // ---------------------------------------------------------------------------
+// Canon System — DM Consistency
+// ---------------------------------------------------------------------------
+
+async function getCanon(campaignId: string, env: Env): Promise<CanonFact[]> {
+  const raw = await env.WORLD_STATE.get(`campaign:${campaignId}:canon`);
+  return raw ? JSON.parse(raw) as CanonFact[] : [];
+}
+
+async function saveCanon(campaignId: string, canon: CanonFact[], env: Env): Promise<void> {
+  await env.WORLD_STATE.put(`campaign:${campaignId}:canon`, JSON.stringify(canon));
+}
+
+function extractFactsFromNarration(narration: string): CanonFact[] {
+  const facts: CanonFact[] = [];
+  // Extract named entity facts: "Grimjaw is a troll", "Eldrin lives in Brindenford"
+  const namedFactPattern = /([A-Z][a-zA-Z\s]+?)\s+(?:is|was|has|owns|lives|wields|wears|carries|killed|died|gave|took)\s+([^.]+)/g;
+  let match;
+  while ((match = namedFactPattern.exec(narration)) !== null) {
+    const subject = match[1].trim();
+    if (subject.length < 2 || subject.length > 40) continue;
+    facts.push({
+      subject,
+      fact: `${subject} ${match[0].slice(subject.length).trim()}`,
+      source: 'dm_narration',
+      timestamp: Date.now(),
+    });
+  }
+  return facts;
+}
+
+async function checkCanonConsistency(
+  campaignId: string,
+  playerMessage: string,
+  proposedNarration: string,
+  env: Env,
+): Promise<string | null> {
+  const canon = await getCanon(campaignId, env);
+  if (canon.length === 0) return null;
+
+  // Check if the proposed narration contradicts any established canon
+  const lowerNarration = proposedNarration.toLowerCase();
+  for (const fact of canon) {
+    const subject = fact.subject.toLowerCase();
+    // If the narration mentions a canon subject, verify it doesn't contradict
+    if (lowerNarration.includes(subject)) {
+      const canonFact = fact.fact.toLowerCase();
+      // Simple contradiction detection: death, location change, identity change
+      const deathWords = ['dies', 'is killed', 'falls dead', 'slain'];
+      const wasDead = deathWords.some(w => canonFact.includes(w));
+      if (wasDead && !lowerNarration.includes('ghost') && !lowerNarration.includes('spirit') && !lowerNarration.includes('undead')) {
+        // Check if the narration treats a dead character as alive
+        const aliveIndicators = ['smiles', 'nods', 'speaks', 'walks', 'runs', 'attacks'];
+        if (aliveIndicators.some(a => lowerNarration.includes(subject) && lowerNarration.includes(a))) {
+          return `Canon violation: ${fact.subject} is established as dead (${fact.fact}) but narrated as alive.`;
+        }
+      }
+    }
+  }
+  return null;
+}
+
+async function updateCanonFromNarration(campaignId: string, narration: string, env: Env): Promise<void> {
+  const newFacts = extractFactsFromNarration(narration);
+  if (newFacts.length === 0) return;
+
+  const canon = await getCanon(campaignId, env);
+  // Merge: update existing subjects, add new ones (max 200 facts)
+  for (const fact of newFacts) {
+    const existing = canon.findIndex(f => f.subject.toLowerCase() === fact.subject.toLowerCase());
+    if (existing >= 0) {
+      // Only update if the new fact is more recent and not identical
+      if (fact.timestamp > canon[existing].timestamp) {
+        canon[existing] = fact;
+      }
+    } else {
+      canon.push(fact);
+    }
+  }
+
+  // Keep canon bounded
+  while (canon.length > 200) {
+    canon.shift();
+  }
+
+  await saveCanon(campaignId, canon, env);
+}
+
+// ---------------------------------------------------------------------------
+// Snapshot Helpers
+// ---------------------------------------------------------------------------
+
+function generateSnapshotSummary(state: WorldState): string {
+  const chars = state.characters.map(c => `${c.name} (Lv${c.level} ${c.race} ${c.class})`).join(', ') || 'No characters';
+  const quests = state.quests.filter(q => q.status === 'active').map(q => q.name).join(', ') || 'None';
+  const npcs = state.npcs.map(n => n.name).join(', ') || 'None';
+  return `Scene: ${state.metadata.currentScene} | Characters: ${chars} | Quests: ${quests} | NPCs: ${npcs} | Turn: ${state.metadata.turnCount}`;
+}
+
+function formatSnapshotText(snapshot: { campaignId: string; capturedAt: number; worldState: WorldState; canon: CanonFact[]; summary: string }): string {
+  const s = snapshot.worldState;
+  const lines = [
+    `=== DMLog.ai Campaign Snapshot ===`,
+    `Campaign: ${snapshot.campaignId}`,
+    `Captured: ${new Date(snapshot.capturedAt).toISOString()}`,
+    ``,
+    `--- World State ---`,
+    `Scene: ${s.metadata.currentScene}`,
+    `Turn: ${s.metadata.turnCount}`,
+    ``,
+    `--- Characters ---`,
+    ...s.characters.map(c => `  ${c.name}: Lv${c.level} ${c.race} ${c.class} | HP ${c.hp}/${c.maxHp} | AC ${c.ac}`),
+    s.characters.length === 0 ? '  (none)' : '',
+    ``,
+    `--- Active Quests ---`,
+    ...s.quests.filter(q => q.status === 'active').map(q => `  ${q.name}: ${q.description}`),
+    ``,
+    `--- NPCs ---`,
+    ...s.npcs.map(n => `  ${n.name} (${n.race}) - ${n.disposition}`),
+    ``,
+    `--- Recent Narrative ---`,
+    ...s.narrativeLog.slice(-3).map(e => `[Turn ${e.turn}] Player: ${e.playerAction}\n  DM: ${e.dmNarration.slice(0, 200)}`),
+    ``,
+    `--- Canon (${snapshot.canon.length} facts) ---`,
+    ...snapshot.canon.slice(-10).map(f => `  - ${f.fact}`),
+    ``,
+    `=== End Snapshot ===`,
+  ];
+  return lines.join('\n');
+}
+
+// ---------------------------------------------------------------------------
 // Fantasy-Themed Error Messages
 // ---------------------------------------------------------------------------
 
@@ -561,33 +699,92 @@ async function handleRequest(request: Request, env: Env): Promise<Response> {
     }
   }
 
-  // ----- API: Chat -----
+  // ----- API: Campaign Snapshot -----
+
+  const snapshotMatch = path.match(/^\/api\/campaign\/([a-f0-9]+)\/snapshot$/);
+  if (snapshotMatch && request.method === 'POST') {
+    const campaignId = snapshotMatch[1];
+    try {
+      const raw = await env.WORLD_STATE.get(`campaign:${campaignId}`);
+      if (!raw) return errorResponse(404, 'no_campaign');
+      const state: WorldState = JSON.parse(raw);
+
+      // Load canon
+      const canon = await getCanon(campaignId, env);
+
+      // Build snapshot
+      const snapshot = {
+        campaignId,
+        capturedAt: Date.now(),
+        worldState: state,
+        canon,
+        summary: generateSnapshotSummary(state),
+      };
+
+      // Persist snapshot
+      const snapshotId = generateId();
+      await env.WORLD_STATE.put(`snapshot:${snapshotId}`, JSON.stringify(snapshot));
+
+      // Return both JSON and formatted text
+      const formatted = formatSnapshotText(snapshot);
+
+      return new Response(JSON.stringify({
+        snapshotId,
+        snapshot,
+        formatted,
+      }), {
+        status: 201,
+        headers: { 'Content-Type': 'application/json', ...corsHeaders() },
+      });
+    } catch {
+      return errorResponse(500, 'internal');
+    }
+  }
+
+  // ----- API: Chat (with streaming support) -----
 
   if (path === '/api/chat' && request.method === 'POST') {
     try {
       const body = await request.json() as ChatRequest;
-      if (!body.campaignId || !body.message) {
+      if (!body.message) {
         return errorResponse(400, 'bad_request');
       }
-      if (!body.character) {
-        return errorResponse(400, 'no_character');
+
+      // Determine campaign — create ephemeral if not provided
+      let campaignId = body.campaignId;
+      let worldState: WorldState;
+
+      if (!campaignId) {
+        // No campaign specified — use a fallback or create ephemeral
+        return errorResponse(400, 'bad_request');
       }
 
       // Rate limit
-      const sessionId = body.campaignId;
+      const sessionId = campaignId;
       const allowed = await checkRateLimit(sessionId, env);
       if (!allowed) return errorResponse(429, 'rate_limited');
 
       // Load world state
-      const raw = await env.WORLD_STATE.get(`campaign:${body.campaignId}`);
+      const raw = await env.WORLD_STATE.get(`campaign:${campaignId}`);
       if (!raw) return errorResponse(404, 'no_campaign');
-      const worldState: WorldState = JSON.parse(raw);
+      worldState = JSON.parse(raw);
+
+      // Resolve character reference
+      const characterRef = body.characterId
+        ? worldState.characters.find(c => c.id === body.characterId)?.name ?? body.characterId
+        : (worldState.characters[0]?.name ?? 'Adventurer');
 
       // Extract intent
       const intent = extractIntent(body.message);
 
+      // Canon check: load established facts
+      const canon = await getCanon(campaignId, env);
+      const canonContext = canon.length > 0
+        ? '\n\n## Established Canon (DO NOT contradict these facts)\n' + canon.map(f => `- ${f.fact}`).join('\n')
+        : '';
+
       // Build LLM messages
-      const systemPrompt = buildSystemPrompt(worldState, body.character, intent);
+      const systemPrompt = buildSystemPrompt(worldState, characterRef, intent) + canonContext;
       const recentNarrative = worldState.narrativeLog.slice(-5).map(e =>
         `Player: ${e.playerAction}\nDM: ${e.dmNarration}`
       ).join('\n\n');
@@ -598,8 +795,84 @@ async function handleRequest(request: Request, env: Env): Promise<Response> {
         { role: 'user', content: body.message },
       ];
 
-      // Call LLM
+      // Check if client wants streaming (Accept: text/event-stream or ?stream=true)
+      const wantsStream = url.searchParams.get('stream') === 'true'
+        || request.headers.get('Accept') === 'text/event-stream';
+
+      if (wantsStream) {
+        // Streaming response
+        const { readable, writable } = new TransformStream();
+        const writer = writable.getWriter();
+        const encoder = new TextEncoder();
+
+        // Stream in background
+        const streamPromise = (async () => {
+          try {
+            const narration = await callLLM(messages, env, async (chunk) => {
+              await writer.write(encoder.encode(`data: ${JSON.stringify({ type: 'chunk', text: chunk })}\n\n`));
+            });
+
+            // Canon check on the full narration
+            const contradiction = await checkCanonConsistency(campaignId, body.message, narration, env);
+            if (contradiction) {
+              await writer.write(encoder.encode(`data: ${JSON.stringify({ type: 'canon_warning', warning: contradiction })}\n\n`));
+            }
+
+            // Update canon from narration
+            await updateCanonFromNarration(campaignId, narration, env);
+
+            // Update world state
+            worldState.metadata.turnCount++;
+            worldState.metadata.updatedAt = Date.now();
+            worldState.narrativeLog.push({
+              turn: worldState.metadata.turnCount,
+              timestamp: Date.now(),
+              playerAction: body.message,
+              dmNarration: narration,
+              stateChanges: [`intent:${intent}`],
+            });
+
+            await env.WORLD_STATE.put(`campaign:${campaignId}`, JSON.stringify(worldState));
+
+            // Update campaign meta
+            const list = await getCampaignList(env);
+            const meta = list.find(c => c.id === campaignId);
+            if (meta) {
+              meta.updatedAt = Date.now();
+              meta.sessionCount++;
+              await saveCampaignList(list, env);
+            }
+
+            await writer.write(encoder.encode(`data: ${JSON.stringify({ type: 'done', narration, intent })}\n\n`));
+          } catch (err) {
+            console.error('[DMLog] Stream error:', err);
+            await writer.write(encoder.encode(`data: ${JSON.stringify({ type: 'error', message: 'An arcane disturbance disrupted the weaving.' })}\n\n`));
+          } finally {
+            await writer.close();
+          }
+        })();
+
+        // Prevent unhandled rejection
+        streamPromise.catch(() => {});
+
+        return new Response(readable, {
+          headers: {
+            'Content-Type': 'text/event-stream',
+            'Cache-Control': 'no-cache',
+            'Connection': 'keep-alive',
+            ...corsHeaders(),
+          },
+        });
+      }
+
+      // Non-streaming: call LLM and return JSON
       const narration = await callLLM(messages, env);
+
+      // Canon check
+      const contradiction = await checkCanonConsistency(campaignId, body.message, narration, env);
+
+      // Update canon from narration
+      await updateCanonFromNarration(campaignId, narration, env);
 
       // Update world state
       worldState.metadata.turnCount++;
@@ -612,11 +885,11 @@ async function handleRequest(request: Request, env: Env): Promise<Response> {
         stateChanges: [`intent:${intent}`],
       });
 
-      await env.WORLD_STATE.put(`campaign:${body.campaignId}`, JSON.stringify(worldState));
+      await env.WORLD_STATE.put(`campaign:${campaignId}`, JSON.stringify(worldState));
 
       // Update campaign meta
       const list = await getCampaignList(env);
-      const meta = list.find(c => c.id === body.campaignId);
+      const meta = list.find(c => c.id === campaignId);
       if (meta) {
         meta.updatedAt = Date.now();
         meta.sessionCount++;
@@ -626,6 +899,7 @@ async function handleRequest(request: Request, env: Env): Promise<Response> {
       return new Response(JSON.stringify({
         narration,
         intent,
+        canonWarning: contradiction,
         worldState,
       }), {
         headers: { 'Content-Type': 'application/json', ...corsHeaders() },
