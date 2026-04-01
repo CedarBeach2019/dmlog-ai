@@ -438,6 +438,163 @@ export class InventoryManager {
   }
 
   // -----------------------------------------------------------------------
+  // Currency / Gold
+  // -----------------------------------------------------------------------
+
+  private wallets: Map<string, { gold: number; silver: number; copper: number }> = new Map();
+
+  /** Get or create a wallet for a character. */
+  getWallet(characterId: string): { gold: number; silver: number; copper: number } {
+    if (!this.wallets.has(characterId)) {
+      this.wallets.set(characterId, { gold: 0, silver: 0, copper: 0 });
+    }
+    return this.wallets.get(characterId)!;
+  }
+
+  /** Add gold (converts from silver/copper automatically). */
+  addGold(characterId: string, gold: number, silver = 0, copper = 0): number {
+    const wallet = this.getWallet(characterId);
+    wallet.gold += gold;
+    wallet.silver += silver;
+    wallet.copper += copper;
+    // Auto-convert: 100 copper = 10 silver = 1 gold
+    while (wallet.copper >= 100) { wallet.copper -= 100; wallet.silver += 10; }
+    while (wallet.silver >= 10) { wallet.silver -= 10; wallet.gold += 1; }
+    return wallet.gold;
+  }
+
+  /** Spend gold. Returns true if sufficient funds. */
+  spendGold(characterId: string, gold: number): boolean {
+    const wallet = this.getWallet(characterId);
+    const totalInCopper = wallet.gold * 100 + wallet.silver * 10 + wallet.copper;
+    const costInCopper = gold * 100;
+    if (totalInCopper < costInCopper) return false;
+
+    let remaining = costInCopper;
+    // Spend copper first, then silver, then gold
+    const copperSpent = Math.min(wallet.copper, remaining);
+    wallet.copper -= copperSpent;
+    remaining -= copperSpent;
+    const silverSpent = Math.min(wallet.silver * 10, remaining);
+    wallet.silver -= Math.ceil(silverSpent / 10);
+    remaining -= silverSpent;
+    wallet.gold -= remaining / 100;
+    wallet.gold = Math.round(wallet.gold * 100) / 100; // avoid floating point
+    return true;
+  }
+
+  /** Get total value in gold pieces. */
+  getTotalGold(characterId: string): number {
+    const w = this.getWallet(characterId);
+    return w.gold + w.silver / 10 + w.copper / 100;
+  }
+
+  // -----------------------------------------------------------------------
+  // Item Identification
+  // -----------------------------------------------------------------------
+
+  private identifiedItems: Map<string, Set<string>> = new Map(); // characterId -> set of known item IDs
+
+  /** Check if a character has identified an item. */
+  isIdentified(characterId: string, itemId: string): boolean {
+    // Common items are always identified
+    const item = this.items.get(itemId);
+    if (!item) return true;
+    if (item.rarity === "common") return true;
+    if (!item.magical) return true;
+
+    const known = this.identifiedItems.get(characterId);
+    return known?.has(itemId) ?? false;
+  }
+
+  /** Identify a magical item (requires Identify spell or short rest study). */
+  identifyItem(characterId: string, itemId: string): boolean {
+    const item = this.items.get(itemId);
+    if (!item) return false;
+    if (item.rarity === "common" || !item.magical) return true;
+
+    if (!this.identifiedItems.has(characterId)) {
+      this.identifiedItems.set(characterId, new Set());
+    }
+    this.identifiedItems.get(characterId)!.add(itemId);
+    return true;
+  }
+
+  /** Get the unidentified description of a magical item. */
+  getUnidentifiedDescription(itemId: string): string {
+    const item = this.items.get(itemId);
+    if (!item || !item.magical) return item?.description ?? "Unknown item.";
+
+    const rarityHint: Record<Rarity, string> = {
+      common: "a faintly glimmering",
+      uncommon: "a softly glowing",
+      rare: "a brightly gleaming",
+      "very-rare": "a pulsing, radiant",
+      legendary: "an overwhelmingly brilliant",
+      artifact: "an unfathomable, reality-warping",
+    };
+    return `This appears to be ${rarityHint[item.rarity]} ${item.type}. Its true nature is unknown until identified.`;
+  }
+
+  // -----------------------------------------------------------------------
+  // Drop / Give / Trade
+  // -----------------------------------------------------------------------
+
+  /** Drop an item from inventory (leaves it on the ground at current location). */
+  drop(characterId: string, itemId: string, quantity = 1): { success: boolean; item?: Item; description: string } {
+    const removed = this.remove(characterId, itemId, quantity);
+    const item = this.items.get(itemId);
+    if (!removed) return { success: false, description: "You don't have that item." };
+    return { success: true, item, description: `Dropped ${quantity}x ${item?.name ?? "item"}.` };
+  }
+
+  /** Give an item to another character. */
+  give(fromCharacterId: string, toCharacterId: string, itemId: string, quantity = 1): { success: boolean; description: string } {
+    const item = this.items.get(itemId);
+    if (!item) return { success: false, description: "Item doesn't exist." };
+
+    const removed = this.remove(fromCharacterId, itemId, quantity);
+    if (!removed) return { success: false, description: "You don't have that item." };
+
+    // Create a new instance of the item for the recipient
+    const newItem: Item = { ...item, id: generateItemId() };
+    this.items.set(newItem.id, newItem);
+    this.add(toCharacterId, newItem, quantity);
+
+    return { success: true, description: `Gave ${quantity}x ${item.name} to recipient.` };
+  }
+
+  /** Trade an item for gold. */
+  sell(characterId: string, itemId: string, quantity = 1, sellPriceMultiplier = 0.5): { success: boolean; goldReceived: number; description: string } {
+    const item = this.items.get(itemId);
+    if (!item) return { success: false, goldReceived: 0, description: "Item doesn't exist." };
+
+    const removed = this.remove(characterId, itemId, quantity);
+    if (!removed) return { success: false, goldReceived: 0, description: "You don't have that item." };
+
+    const goldReceived = Math.floor(item.value * sellPriceMultiplier * quantity);
+    this.addGold(characterId, goldReceived);
+
+    return { success: true, goldReceived, description: `Sold ${quantity}x ${item.name} for ${goldReceived} gp.` };
+  }
+
+  /** Buy an item from a shop (costs gold). */
+  buy(characterId: string, itemId: string, quantity = 1): { success: boolean; goldSpent: number; description: string } {
+    const item = this.items.get(itemId);
+    if (!item) return { success: false, goldSpent: 0, description: "Item not available." };
+
+    const totalCost = item.value * quantity;
+    const afforded = this.spendGold(characterId, totalCost);
+    if (!afforded) return { success: false, goldSpent: 0, description: `Not enough gold. Need ${totalCost} gp.` };
+
+    const newItem: Item = { ...item, id: generateItemId() };
+    this.items.set(newItem.id, newItem);
+    this.add(characterId, newItem, quantity);
+
+    return { success: true, goldSpent: totalCost, description: `Bought ${quantity}x ${item.name} for ${totalCost} gp.` };
+  }
+
+  // -----------------------------------------------------------------------
   // Serialization
   // -----------------------------------------------------------------------
 
@@ -446,6 +603,8 @@ export class InventoryManager {
       items: Array.from(this.items.entries()),
       inventories: Array.from(this.inventories.entries()).map(([k, v]) => [k, v]),
       attunedItems: Array.from(this.attunedItems.entries()).map(([k, v]) => [k, [...v]]),
+      wallets: Array.from(this.wallets.entries()),
+      identifiedItems: Array.from(this.identifiedItems.entries()).map(([k, v]) => [k, [...v]]),
       nextItemId,
     });
   }
@@ -456,6 +615,10 @@ export class InventoryManager {
     this.inventories = new Map(parsed.inventories);
     this.attunedItems = new Map(
       parsed.attunedItems.map(([k, v]: [string, string[]]) => [k, new Set(v)])
+    );
+    this.wallets = new Map(parsed.wallets ?? []);
+    this.identifiedItems = new Map(
+      (parsed.identifiedItems ?? []).map(([k, v]: [string, string[]]) => [k, new Set(v)])
     );
     nextItemId = parsed.nextItemId ?? this.items.size + 1;
   }
