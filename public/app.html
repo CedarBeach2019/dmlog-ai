@@ -6,7 +6,7 @@
   <title>DMLog.ai -- The Realm Awaits</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Crimson+Text:ital,wght@0,400;0,600;0,700;1,400;1,600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Crimson+Text:ital,wght@0,400;0,600;0,700;1,400;1,600&family=MedievalSharp&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
   <style>
     /* ========== RESET & BASE ========== */
@@ -18,6 +18,7 @@
       --bg-panel-raised: #222222;
       --bg-narrative: #1c1a16;
       --bg-parchment: #2a261e;
+      --parchment-texture: linear-gradient(135deg, rgba(42,38,30,0.9) 0%, rgba(35,30,22,0.95) 50%, rgba(42,38,30,0.9) 100%);
       --gold: #c9a23c;
       --gold-light: #e0c068;
       --gold-dim: #8a6f2a;
@@ -34,7 +35,10 @@
       --accent-purple: #9c6ade;
       --border-subtle: #333333;
       --border-gold: var(--gold-dim);
+      --damage-red: #ff4444;
+      --heal-gold: #c9a23c;
       --font-heading: 'Cinzel', serif;
+      --font-fantasy: 'MedievalSharp', cursive;
       --font-narrative: 'Crimson Text', serif;
       --font-ui: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
       --sidebar-left: 260px;
@@ -934,6 +938,152 @@
       .dice-buttons { grid-template-columns: repeat(4, 1fr); }
     }
 
+    /* ========== PARCHMENT MESSAGE BACKGROUNDS ========== */
+    .msg-dm {
+      background: var(--parchment-texture);
+      border: 1px solid rgba(201, 162, 60, 0.15);
+      position: relative;
+    }
+    .msg-dm::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background:
+        repeating-linear-gradient(0deg, transparent, transparent 28px, rgba(160,130,80,0.04) 28px, rgba(160,130,80,0.04) 29px);
+      pointer-events: none;
+      border-radius: inherit;
+    }
+
+    /* ========== CHARACTER PORTRAIT AVATARS ========== */
+    .avatar-circle {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: 2px solid var(--gold-dim);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      flex-shrink: 0;
+      background: var(--bg-void);
+    }
+    .avatar-circle.dm-avatar { border-color: var(--gold); background: rgba(201,162,60,0.1); }
+    .avatar-circle.player-avatar { border-color: var(--accent-purple); background: rgba(156,106,222,0.1); }
+
+    .char-portrait {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      border: 2px solid var(--gold);
+      margin: 0 auto 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.8rem;
+      background: var(--bg-void);
+      box-shadow: 0 0 12px var(--gold-glow);
+    }
+
+    /* ========== D20 SPIN ANIMATION ========== */
+    @keyframes d20Spin {
+      0% { transform: rotateY(0deg) scale(1); }
+      25% { transform: rotateY(90deg) scale(1.1); }
+      50% { transform: rotateY(180deg) scale(1); }
+      75% { transform: rotateY(270deg) scale(1.1); }
+      100% { transform: rotateY(360deg) scale(1); }
+    }
+    @keyframes d20Float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-6px); }
+    }
+    .dice-spinner {
+      display: inline-block;
+      font-size: 2.5rem;
+      animation: d20Spin 0.6s ease-in-out infinite;
+      perspective: 200px;
+    }
+    .dice-spinner.landed {
+      animation: d20Float 2s ease-in-out infinite;
+    }
+
+    .msg-system.dice-result .dice-spinner-wrap {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* ========== COMBAT EFFECTS ========== */
+    @keyframes damageFlash {
+      0% { background-color: transparent; }
+      20% { background-color: rgba(255, 68, 68, 0.25); }
+      100% { background-color: transparent; }
+    }
+    @keyframes healGlow {
+      0% { box-shadow: none; }
+      30% { box-shadow: 0 0 20px rgba(201, 162, 60, 0.6), inset 0 0 12px rgba(201, 162, 60, 0.2); }
+      100% { box-shadow: none; }
+    }
+    @keyframes critFlash {
+      0% { background-color: transparent; }
+      15% { background-color: rgba(255, 215, 0, 0.35); }
+      30% { background-color: transparent; }
+      45% { background-color: rgba(255, 215, 0, 0.2); }
+      100% { background-color: transparent; }
+    }
+
+    .damage-flash { animation: damageFlash 0.8s ease-out; }
+    .heal-glow { animation: healGlow 1.2s ease-out; }
+    .crit-flash { animation: critFlash 1s ease-out; }
+
+    .hp-bar-fill.crit-effect {
+      animation: damageFlash 0.5s ease-out 3;
+    }
+
+    /* ========== SUBTLE BORDER DECORATIONS ========== */
+    .ornament-border {
+      position: relative;
+    }
+    .ornament-border::before {
+      content: '\2726';
+      position: absolute;
+      top: -8px;
+      left: 50%;
+      transform: translateX(-50%);
+      color: var(--gold-dim);
+      font-size: 0.7rem;
+      background: var(--bg-narrative);
+      padding: 0 8px;
+    }
+
+    .ornament-divider {
+      text-align: center;
+      margin: 16px 0;
+      position: relative;
+    }
+    .ornament-divider::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--gold-dim), transparent);
+    }
+    .ornament-divider span {
+      position: relative;
+      background: var(--bg-narrative);
+      padding: 0 12px;
+      color: var(--gold-dim);
+      font-size: 0.8rem;
+    }
+
+    /* ========== FANTASY FONT HEADERS ========== */
+    .section-title.fantasy {
+      font-family: var(--font-fantasy);
+      font-size: 0.85rem;
+      letter-spacing: 1px;
+    }
+
     /* ========== UTILITY ========== */
     .hidden { display: none !important; }
 
@@ -943,16 +1093,38 @@
       padding: 40px 20px;
       border: 1px solid var(--gold-dim);
       border-radius: var(--radius);
-      background: rgba(201, 162, 60, 0.03);
+      background: var(--parchment-texture);
       margin: 20px 0;
+      position: relative;
+      overflow: hidden;
+    }
+    .welcome-banner::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background:
+        repeating-linear-gradient(0deg, transparent, transparent 28px, rgba(160,130,80,0.04) 28px, rgba(160,130,80,0.04) 29px);
+      pointer-events: none;
+    }
+    .welcome-banner::after {
+      content: '\2726 \2726 \2726';
+      position: absolute;
+      bottom: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      color: var(--gold-dim);
+      font-size: 0.6rem;
+      letter-spacing: 12px;
+      opacity: 0.5;
     }
 
     .welcome-banner h2 {
-      font-family: var(--font-heading);
-      font-size: 1.5rem;
+      font-family: var(--font-fantasy);
+      font-size: 1.8rem;
       color: var(--gold);
       margin-bottom: 8px;
       letter-spacing: 3px;
+      position: relative;
     }
 
     .welcome-banner p {
@@ -960,6 +1132,15 @@
       font-size: 1rem;
       color: var(--text-secondary);
       line-height: 1.6;
+      position: relative;
+    }
+
+    /* ========== MOBILE SIMPLIFIED IMMERSIVE ========== */
+    @media (max-width: 768px) {
+      .welcome-banner { padding: 24px 16px; }
+      .welcome-banner h2 { font-size: 1.4rem; }
+      .char-portrait { width: 48px; height: 48px; font-size: 1.4rem; }
+      .dice-spinner { font-size: 2rem; }
     }
   </style>
 </head>
@@ -982,6 +1163,7 @@
       <!-- ====== LEFT: CHARACTER SHEET ====== -->
       <aside class="sidebar-left" id="sidebarLeft">
         <div class="char-header">
+          <div class="char-portrait">&#9876;&#65039;</div>
           <div class="char-name" id="charName">Thorin Ironforge</div>
           <div class="char-subtitle" id="charSubtitle">Mountain Dwarf &middot; Fighter</div>
           <div class="char-level" id="charLevel">Level 5</div>
@@ -1070,7 +1252,7 @@
 
           <!-- Example DM message -->
           <div class="narrative-entry msg-dm">
-            <div class="sender">Dungeon Master</div>
+            <div class="sender"><span class="avatar-circle dm-avatar" style="display:inline-flex;vertical-align:middle;width:22px;height:22px;font-size:0.65rem;margin-right:6px;">&#127922;</span>Dungeon Master</div>
             <div class="body">
               The heavy oak door creaks open, revealing a vast chamber bathed in flickering torchlight. Stone pillars carved with <em>ancient Dwarvish runes</em> stretch toward a ceiling lost in shadow. The air is thick with dust and the faint scent of copper. Before you, a wide stone bridge spans a dark chasm, and on the far side, you can just make out the shape of <strong>Grimjaw the Troll</strong> hunched over a flickering campfire, gnawing on something you'd rather not identify.
             </div>
@@ -1078,18 +1260,21 @@
 
           <!-- Example player message -->
           <div class="narrative-entry msg-player">
-            <div class="sender">Thorin Ironforge</div>
+            <div class="sender"><span class="avatar-circle player-avatar" style="display:inline-flex;vertical-align:middle;width:22px;height:22px;font-size:0.65rem;margin-right:6px;">&#9876;</span>Thorin Ironforge</div>
             <div class="body">I draw my warhammer and approach the bridge cautiously, keeping to the shadows of the pillars. I want to get a better look at the troll before it notices me.</div>
           </div>
 
           <!-- Example system message (dice) -->
           <div class="narrative-entry msg-system dice-result">
-            <div class="body"><span class="dice-icon">&#127922;</span> Stealth Check: d20+3 = <strong>17</strong></div>
+            <div class="body"><span class="dice-spinner-wrap"><span class="dice-spinner landed">&#127922;</span></span> Stealth Check: d20+3 = <strong>17</strong></div>
           </div>
+
+          <!-- Ornamental divider -->
+          <div class="ornament-divider"><span>&#10038;</span></div>
 
           <!-- Example DM response -->
           <div class="narrative-entry msg-dm">
-            <div class="sender">Dungeon Master</div>
+            <div class="sender"><span class="avatar-circle dm-avatar" style="display:inline-flex;vertical-align:middle;width:22px;height:22px;font-size:0.65rem;margin-right:6px;">&#127922;</span>Dungeon Master</div>
             <div class="body">
               You slip between the pillars like a whisper. The troll's ears twitch but it doesn't look up -- too absorbed in its meal. From this angle you can see a heavy iron chain around its neck, trailing off into the darkness beyond the firelight. There is a <em>wooden cage</em> against the far wall, and inside it, a small figure huddled in the corner. A child, by the look of it. The <strong>key</strong> hangs from Grimjaw's belt, glinting in the firelight.
             </div>
@@ -1432,6 +1617,46 @@
         li.innerHTML = '<span class="rh-formula">' + r.formula + '</span><span class="rh-total">' + r.total + '</span>';
         ul.appendChild(li);
       });
+    }
+
+    // ---- Combat Visual Effects ----
+    function flashDamage() {
+      var area = document.getElementById('narrativeArea');
+      area.classList.add('damage-flash');
+      setTimeout(function() { area.classList.remove('damage-flash'); }, 800);
+    }
+
+    function glowHeal() {
+      var bar = document.getElementById('hpBar');
+      bar.classList.add('heal-glow');
+      setTimeout(function() { bar.classList.remove('heal-glow'); }, 1200);
+    }
+
+    function flashCrit() {
+      var area = document.getElementById('narrativeArea');
+      area.classList.add('crit-flash');
+      setTimeout(function() { area.classList.remove('crit-flash'); }, 1000);
+    }
+
+    // ---- Animated Dice in Narrative ----
+    function showDiceAnimation(sides, callback) {
+      var area = document.getElementById('narrativeArea');
+      var div = document.createElement('div');
+      div.className = 'narrative-entry msg-system dice-result';
+      div.innerHTML = '<div class="body"><span class="dice-spinner-wrap"><span class="dice-spinner">&#127922;</span></span> Rolling d' + sides + '...</div>';
+      area.appendChild(div);
+      scrollToBottom();
+
+      var ticks = 0;
+      var interval = setInterval(function() {
+        ticks++;
+        if (ticks >= 10) {
+          clearInterval(interval);
+          var spinner = div.querySelector('.dice-spinner');
+          if (spinner) spinner.classList.add('landed');
+          if (callback) callback(div);
+        }
+      }, 80);
     }
 
     // ---- Narrative Helpers ----
