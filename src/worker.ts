@@ -122,6 +122,18 @@ interface ChatRequest {
   characterId?: string;
 }
 
+interface AssetGallery {
+  id: string;
+  type: string;
+  subject: string;
+  style: string;
+  resolution: string;
+  prompt: string;
+  imageUrl: string;
+  createdAt: number;
+  campaignId?: string;
+}
+
 interface CanonFact {
   subject: string;
   fact: string;
@@ -606,6 +618,146 @@ function corsHeaders(): Record<string, string> {
 }
 
 // ---------------------------------------------------------------------------
+// Asset Generation helpers (imported from game modules)
+// ---------------------------------------------------------------------------
+
+async function handleAssetRoutes(path: string, request: Request, env: Env): Promise<Response | null> {
+  const { getStyle, getAllStyles, mixStyles, generateStylePrompt } = await import('./game/world-styles.js');
+  const { buildAssetPrompt, buildSpritePrompt, buildScenePrompt, ASSET_RECIPES } = await import('./game/asset-recipes.js');
+  const { startResearch, checkResearchStatus, getJob } = await import('./game/auto-research.js');
+
+  // GET /api/styles — list all art styles
+  if (path === '/api/styles' && request.method === 'GET') {
+    const styles = getAllStyles();
+    return new Response(JSON.stringify({ styles }), {
+      headers: { 'Content-Type': 'application/json', ...corsHeaders() },
+    });
+  }
+
+  // GET /api/styles/:id — single style details
+  const styleMatch = path.match(/^\/api\/styles\/([a-z_]+)$/);
+  if (styleMatch && request.method === 'GET') {
+    const style = getStyle(styleMatch[1]);
+    if (!style) return errorResponse(404, 'not_found');
+    return new Response(JSON.stringify({ style }), {
+      headers: { 'Content-Type': 'application/json', ...corsHeaders() },
+    });
+  }
+
+  // POST /api/generate/asset — generate any asset
+  if (path === '/api/generate/asset' && request.method === 'POST') {
+    try {
+      const body = await request.json() as { type?: string; subject?: string; style?: string; resolution?: string; extras?: string[] };
+      if (!body.type || !body.subject || !body.style) return errorResponse(400, 'bad_request');
+
+      const prompt = buildAssetPrompt(
+        body.type as 'location' | 'monster' | 'item' | 'portrait' | 'map' | 'effect',
+        body.subject,
+        body.style,
+        (body.resolution as 'sprite-16' | 'sprite-32' | 'sprite-64' | 'sketch' | 'watercolor' | 'oil' | 'photorealistic') ?? 'oil',
+        body.extras ?? [],
+      );
+
+      const styleObj = getStyle(body.style);
+      const assetId = generateId();
+      const asset: AssetGallery = {
+        id: assetId,
+        type: body.type,
+        subject: body.subject,
+        style: body.style,
+        resolution: body.resolution ?? 'oil',
+        prompt,
+        imageUrl: `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt.slice(0, 200))}?width=1024&height=1024&seed=${assetId.slice(0, 8)}`,
+        createdAt: Date.now(),
+      };
+
+      // Persist to KV
+      const galleryRaw = await env.WORLD_STATE.get('gallery:assets');
+      const gallery: AssetGallery[] = galleryRaw ? JSON.parse(galleryRaw) : [];
+      gallery.unshift(asset);
+      if (gallery.length > 200) gallery.length = 200;
+      await env.WORLD_STATE.put('gallery:assets', JSON.stringify(gallery));
+
+      return new Response(JSON.stringify({ asset }), {
+        status: 201,
+        headers: { 'Content-Type': 'application/json', ...corsHeaders() },
+      });
+    } catch {
+      return errorResponse(400, 'bad_request');
+    }
+  }
+
+  // POST /api/generate/sprite — SNES sprite
+  if (path === '/api/generate/sprite' && request.method === 'POST') {
+    try {
+      const body = await request.json() as { character?: string; palette?: string[]; action?: string };
+      if (!body.character) return errorResponse(400, 'bad_request');
+
+      const prompt = buildSpritePrompt(body.character, body.palette ?? ['red', 'gold', 'brown', 'ivory'], body.action ?? 'idle');
+      const assetId = generateId();
+      const asset: AssetGallery = {
+        id: assetId,
+        type: 'sprite',
+        subject: body.character,
+        style: 'pixel-art',
+        resolution: 'sprite-32',
+        prompt,
+        imageUrl: `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt.slice(0, 200))}?width=128&height=128&seed=${assetId.slice(0, 8)}`,
+        createdAt: Date.now(),
+      };
+
+      const galleryRaw = await env.WORLD_STATE.get('gallery:assets');
+      const gallery: AssetGallery[] = galleryRaw ? JSON.parse(galleryRaw) : [];
+      gallery.unshift(asset);
+      if (gallery.length > 200) gallery.length = 200;
+      await env.WORLD_STATE.put('gallery:assets', JSON.stringify(gallery));
+
+      return new Response(JSON.stringify({ asset }), {
+        status: 201,
+        headers: { 'Content-Type': 'application/json', ...corsHeaders() },
+      });
+    } catch {
+      return errorResponse(400, 'bad_request');
+    }
+  }
+
+  // POST /api/research/start — start background research
+  if (path === '/api/research/start' && request.method === 'POST') {
+    try {
+      const body = await request.json() as { culture?: string; era?: string };
+      if (!body.culture) return errorResponse(400, 'bad_request');
+
+      const job = await startResearch(body.culture, body.era ?? 'Medieval');
+      return new Response(JSON.stringify({ job }), {
+        status: 201,
+        headers: { 'Content-Type': 'application/json', ...corsHeaders() },
+      });
+    } catch {
+      return errorResponse(400, 'bad_request');
+    }
+  }
+
+  // GET /api/research/status — check research status
+  if (path === '/api/research/status' && request.method === 'GET') {
+    const report = await checkResearchStatus();
+    return new Response(JSON.stringify(report), {
+      headers: { 'Content-Type': 'application/json', ...corsHeaders() },
+    });
+  }
+
+  // GET /api/gallery — all generated assets
+  if (path === '/api/gallery' && request.method === 'GET') {
+    const galleryRaw = await env.WORLD_STATE.get('gallery:assets');
+    const gallery: AssetGallery[] = galleryRaw ? JSON.parse(galleryRaw) : [];
+    return new Response(JSON.stringify({ assets: gallery }), {
+      headers: { 'Content-Type': 'application/json', ...corsHeaders() },
+    });
+  }
+
+  return null;
+}
+
+// ---------------------------------------------------------------------------
 // HTTP Handler
 // ---------------------------------------------------------------------------
 
@@ -909,6 +1061,11 @@ async function handleRequest(request: Request, env: Env): Promise<Response> {
       return errorResponse(500, 'internal');
     }
   }
+
+  // ----- Asset Generation API routes -----
+
+  const assetResponse = await handleAssetRoutes(path, request, env);
+  if (assetResponse) return assetResponse;
 
   // ----- WebSocket upgrade -----
 
