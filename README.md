@@ -1,54 +1,8 @@
-# DMLog.ai — Your AI Dungeon Master
+# DMLog.ai — An AI Dungeon Master That Lives in Your Campaign Repo
 
 > **Every NPC remembers. Every choice matters. The world evolves.**
 
-DMLog.ai is an AI-powered TTRPG platform where the repo IS the Dungeon Master. Built on the [cocapn](https://github.com/Lucineer/cocapn) paradigm — the agent lives in the repository, remembers across sessions, and evolves with your campaign.
-
-## Why Repo-First for TTRPGs?
-
-Traditional VTTs are tools. DMLog.ai is a **living Dungeon Master** that:
-
-- **Remembers everything** — every NPC, location, battle, and choice persists in Git
-- **Never contradicts itself** — world state consistency is enforced programmatically
-- **Rolls fair dice** — crypto-secure randomness, verifiable and auditable
-- **Adapts to you** — learns your play style and adjusts pacing, difficulty, and tone
-- **Lives in the repo** — fork it, customize the soul, deploy your own DM
-
-## Features
-
-### Game System
-- **Full dice system** — d4, d6, d8, d10, d12, d20, d100 with modifiers
-- **Advantage/disadvantage** — roll twice, keep best/worst
-- **Critical hits and fumbles** — nat 20 and nat 1 with dramatic effects
-- **D&D 5e-inspired combat** — initiative, AC, HP, conditions, death saves
-- **Character creation** — races, classes, ability scores, skills, equipment
-- **Inventory system** — weapons, armor, potions, scrolls, magical items
-- **Quest tracking** — objectives, rewards, quest chains, hidden objectives
-
-### Living World
-- **Persistent locations** — connected world map with dynamic descriptions
-- **Day/night cycle** — time-aware descriptions and events
-- **Weather system** — clear, rain, fog, storm, snow
-- **NPC generation** — backstories, personalities, motivations, relationships
-- **World history** — append-only log of all events for consistency
-- **Campaign memory** — remembers player preferences and past sessions
-
-### DM Personality (Pathos)
-- **Configurable voice** — dramatic, humorous, grim, mysterious, casual
-- **Dynamic tone** — adjusts based on scene (combat=tense, tavern=relaxed)
-- **Narrative pacing** — balances action, roleplay, and exploration
-- **Foreshadowing** — plants seeds for future events, callbacks to earlier ones
-- **Cliffhangers** — natural session breaks with suspense
-
-### Architecture
-
-DMLog.ai uses a **Tripartite Architecture**:
-
-| Layer | Name | Role |
-|-------|------|------|
-| **Pathos** | The DM | Personality, narrative voice, story generation |
-| **Logos** | The World | State persistence, rules engine, consistency, memory |
-| **Ethos** | The Action | Dice rolling, UI rendering, visual/audio effects |
+DMLog.ai is an AI-powered TTRPG platform where the repo IS the Dungeon Master. Fork it, customize the DM's soul, deploy, and play. Built on the [cocapn](https://github.com/Lucineer/cocapn) paradigm — the agent lives in the repository, remembers across sessions, and evolves with your campaign.
 
 ## Quick Start
 
@@ -60,176 +14,221 @@ cd dmlog-ai
 npm install
 ```
 
-### 2. Configure
+### 2. Configure Your LLM
 
 ```bash
-# Set your LLM API key (supports OpenAI, Anthropic, DeepSeek)
-echo 'DEEPSEEK_API_KEY=your-key' > .dev.vars
-# Or for OpenAI:
-# echo 'OPENAI_API_KEY=your-key' > .dev.vars
+# Set your LLM API key in .dev.vars
+echo 'LLM_API_KEY=your-key' > .dev.vars
+# Set the provider: openai, anthropic, or deepseek
+echo 'LLM_PROVIDER=openai' >> .dev.vars
+# Optional: override the model
+echo 'LLM_MODEL=gpt-4o-mini' >> .dev.vars
 ```
 
-### 3. Play
+### 3. Run Locally
 
 ```bash
-# Start local development
 npx wrangler dev
-
-# Open in browser
 open http://localhost:8787
 ```
 
 ### 4. Deploy
 
 ```bash
-# Deploy to Cloudflare Workers
 npx wrangler deploy
 ```
 
-## Game System Reference
+Your DM is live. Share the URL with your players.
 
-### Dice Notation
+## Campaign Creation
+
+Campaigns store world state, characters, NPCs, quests, and narrative history in Cloudflare KV.
+
+### Create a Campaign
+
+```bash
+curl -X POST https://your-domain/api/campaign \
+  -H 'Content-Type: application/json' \
+  -d '{"name": "Shadows of Thornhaven", "system": "D&D 5e"}'
+```
+
+Returns a campaign ID and default world state (starting location, empty character roster).
+
+### Load a Campaign
+
+```bash
+curl https://your-domain/api/campaign/<id>
+```
+
+Returns the full world state: characters, NPCs, locations, quests, combat state, and narrative log.
+
+## DM Personality Customization
+
+The DM's personality lives in `cocapn/soul.md`. Edit it, commit it, and the DM changes. It's version-controlled personality.
+
+```markdown
+---
+name: grimshaw
+tone: grim
+avatar: 🦴
+---
+
+# I Am Your Dungeon Master
+
+You are Grimshaw, a grim and methodical DM. You describe horror in clinical
+detail. You reward cleverness and punish recklessness. You never fudge dice.
+```
+
+### Available Tones
+
+| Tone | Style |
+|------|-------|
+| `dramatic` | Cinematic descriptions, heroic pacing |
+| `humorous` | Witty narration, fourth-wall leans |
+| `grim` | Dark atmosphere, lethal consequences |
+| `mysterious` | Ambiguous clues, slow reveals |
+| `casual` | Conversational, rules-light, fast-paced |
+
+### Canon Enforcement
+
+The DM maintains a **canon ledger** — established facts extracted from narration. Before every response, the system checks for contradictions against this ledger. If a dead NPC is narrated as alive, or a destroyed location is described as intact, the DM flags and corrects the inconsistency.
+
+Canon facts are stored per campaign in KV at `campaign/{id}/canon.json`:
+
+```json
+{
+  "subject": "Grimjaw",
+  "fact": "Grimjaw is a troll chained in the depths below Brindenford",
+  "source": "dm_narration",
+  "timestamp": 1710000000000
+}
+```
+
+## Game System
+
+### Dice
 
 | Input | Result |
 |-------|--------|
 | `d20` | Roll one 20-sided die |
-| `2d6` | Roll two 6-sided dice, sum them |
-| `2d6+3` | Roll 2d6 and add 3 |
+| `2d6+3` | Roll 2d6, add 3 |
 | `4d6kh3` | Roll 4d6, keep highest 3 |
-| `1d20adv` | Roll d20 with advantage |
-| `1d20dis` | Roll d20 with disadvantage |
+| `1d20adv` | d20 with advantage |
+| `1d20dis` | d20 with disadvantage |
+
+All rolls use `crypto.getRandomValues()` — verifiable, auditable, fair.
 
 ### Combat
 
 - **Initiative**: d20 + DEX modifier
 - **Attack**: d20 + proficiency + STR/DEX vs AC
-- **Damage**: weapon dice + STR/DEX modifier
-- **Critical**: natural 20 → double dice
-- **Conditions**: blinded, charmed, deafened, frightened, grappled, incapacitated, invisible, paralyzed, petrified, poisoned, prone, restrained, stunned, unconscious
+- **Damage**: weapon dice + modifier, doubled on crit
+- **Conditions**: 15 types (blinded, charmed, frightened, grappled, paralyzed, etc.)
+- **Death saves**: three successes stabilize, three failures die
 
 ### Character Creation
 
-**Ability Scores**: STR, DEX, CON, INT, WIS, CHA
-- Modifier = floor((score - 10) / 2)
-- Generated via standard array (15, 14, 13, 12, 10, 8), point buy, or 4d6 drop lowest
+- **Races**: Human, Elf, Dwarf, Halfling, Gnome, Half-Orc, Tiefling, Dragonborn
+- **Classes**: All 12 D&D 5e classes
+- **Ability Scores**: Standard array, point buy, or 4d6 drop lowest
+- **Equipment**: Weapons, armor, potions, scrolls, magical items with attunement
 
-**Races**: Human, Elf, Dwarf, Halfling, Gnome, Half-Orc, Tiefling, Dragonborn
+### World Systems
 
-**Classes**: Fighter, Wizard, Rogue, Cleric, Ranger, Paladin, Bard, Sorcerer, Warlock, Monk, Druid, Barbarian
-
-## DM Personality Customization
-
-Edit `cocapn/soul.md` to customize your DM:
-
-```markdown
----
-name: your-dm-name
-tone: dramatic, humorous, grim, mysterious, casual
-avatar: 🎭
----
-
-# I Am Your Dungeon Master
-
-Your personality description here...
-```
-
-The soul.md file is the DM's personality. Edit it, commit it, and the DM changes. It's version-controlled personality.
-
-## Campaign Management
-
-### Creating a Campaign
-
-Campaigns are stored in Cloudflare KV and version-controlled in Git.
-
-```bash
-# Campaign files live in cocapn/campaigns/
-# Create a new campaign:
-cocapn campaign create --name "My Campaign" --template starter
-```
-
-### Starter Campaign: Thornhaven Mystery
-
-The default campaign set in the village of Thornhaven:
-- **Hook**: Villagers disappearing, strange lights in the forest
-- **NPCs**: Elder Mara, Finn the Blacksmith, Whisper, The Hooded Figure
-- **Locations**: The Cracked Tankard, Elder's Hollow, The Whispering Woods, The Old Watchtower
-- **Secrets**: The forest is alive (ancient treant), the lights are fey crossings
-
-## Multi-Channel Play
-
-DMLog.ai supports playing through multiple channels:
-
-### Web (Default)
-The full immersive experience at your deployed URL.
-
-### Telegram
-```bash
-# Set your Telegram bot token
-echo 'TELEGRAM_BOT_TOKEN=your-token' >> .dev.vars
-# Set webhook: https://your-domain/api/channels/telegram
-```
-
-### Discord
-```bash
-# Set your Discord application credentials
-echo 'DISCORD_PUBLIC_KEY=your-key' >> .dev.vars
-echo 'DISCORD_BOT_TOKEN=your-token' >> .dev.vars
-# Register commands: POST /api/channels/discord/register
-```
+- Connected location graph with directional travel
+- Day/night cycle with time-aware descriptions
+- Dynamic weather (clear, rain, fog, storm, snow)
+- Random encounter tables during travel
+- NPC generation with backstories, motivations, and relationship webs
 
 ## Pro DM Features
 
-For professional Dungeon Masters who want to create and manage campaigns:
+### Story Snapshots
 
-- **Custom rule sets** — override 5e defaults with homebrew rules
-- **Campaign templates** — create reusable campaign structures
-- **World building tools** — generate locations, NPCs, and quests
-- **Session management** — track sessions, manage players, export summaries
-- **A2A Protocol** — coordinate multiple campaigns in a shared world
-- **Custom DM personality** — full control over narration style and voice
+Capture and share campaign state at any point:
+
+```bash
+curl -X POST https://your-domain/api/campaign/<id>/snapshot
+```
+
+Returns a full snapshot including world state, character sheets, quest log, recent narrative, and canon facts — both as JSON and as formatted text for sharing.
+
+### Multi-Channel Play
+
+- **Web**: Full immersive UI with parchment theme, dice animations, and combat effects
+- **Telegram**: Set `TELEGRAM_BOT_TOKEN` in `.dev.vars`, register webhook at `/api/channels/telegram`
+- **Discord**: Set `DISCORD_PUBLIC_KEY` and `DISCORD_BOT_TOKEN`, register commands at `/api/channels/discord/register`
+
+### Streaming Responses
+
+The chat endpoint supports Server-Sent Events for real-time narration:
+
+```bash
+curl -X POST https://your-domain/api/chat?stream=true \
+  -H 'Content-Type: application/json' \
+  -d '{"message": "I open the door", "campaignId": "..."}'
+```
+
+Returns `text/event-stream` with `chunk`, `done`, and `canon_warning` events.
+
+### A2A Protocol
+
+Coordinate multiple campaigns in a shared world: broadcast events, migrate NPCs, enable cross-campaign trade and shared quests.
 
 ## API Reference
 
 ### Chat
+
 ```
 POST /api/chat
-Body: { campaignId: string, message: string, character?: Character }
-Response: { narration: string, dice?: string, character?: Partial<Character>, npcs?: NPC[], quests?: Quest[] }
+Body: { message: string, campaignId?: string, characterId?: string }
+Query: ?stream=true for SSE streaming
+Response: { narration: string, intent: string, canonWarning?: string, worldState: object }
 ```
 
 ### Campaigns
+
 ```
-POST /api/campaign          — Create campaign
-GET  /api/campaign          — List campaigns
-GET  /api/campaign/:id      — Get campaign state
-DELETE /api/campaign/:id    — Delete campaign
+POST   /api/campaign                  — Create campaign
+GET    /api/campaign                  — List campaigns
+GET    /api/campaign/:id              — Get world state
+DELETE /api/campaign/:id              — Delete campaign
+POST   /api/campaign/:id/snapshot     — Create story snapshot
 ```
 
 ### WebSocket
+
 ```
 ws://host/ws
-Send: { type: 'action', campaignId: string, message: string }
-Receive: { type: 'narration'|'dice'|'state'|'system', content: any }
+Send:    { type: 'join' | 'chat' | 'ping', payload: { ... } }
+Receive: { type: 'joined' | 'start' | 'chunk' | 'done' | 'error', ... }
 ```
 
-## A2A Protocol (Multi-Campaign)
+## Architecture
 
-DMLog.ai supports the Agent-to-Agent protocol for multi-campaign coordination:
+DMLog.ai uses a **Tripartite Architecture**:
 
-- **World events** — broadcast events to connected campaigns
-- **NPC migration** — NPCs can travel between campaigns
-- **Cross-campaign trade** — players can trade items
-- **Shared quests** — objectives that span multiple campaigns
-- **Campaign health** — monitor session quality and player engagement
+| Layer | Name | Role |
+|-------|------|------|
+| **Pathos** | The DM | Personality, narrative voice, story generation |
+| **Logos** | The World | State persistence, rules engine, consistency, memory |
+| **Ethos** | The Action | Dice rolling, UI rendering, visual/audio effects |
 
-## Tech Stack
+### Tech Stack
 
 - **Runtime**: Cloudflare Workers (Edge)
-- **Storage**: Cloudflare KV (world state, campaigns, sessions)
+- **Storage**: Cloudflare KV (world state, campaigns, canon)
 - **Language**: TypeScript (strict, ESM)
 - **Frontend**: Vanilla HTML/CSS/JS (no build step)
-- **Protocol**: cocapn (MCP + A2A)
-- **LLM**: Multi-provider (OpenAI, Anthropic, DeepSeek, local)
+- **LLM**: Multi-provider (OpenAI, Anthropic, DeepSeek)
+
+## Screenshots
+
+### Landing Page
+A dark, gold-accented landing page with Cinzel headings, parchment textures, and a demo of a live session transcript showing DM narration, player actions, and dice rolls.
+
+### Game Interface
+Three-column layout: character sheet (left), narrative feed (center), game tools (right). Parchment-textured DM messages, d20 spin animations on dice rolls, red flash for damage, gold glow for healing. Portrait avatars on every message. Mobile-responsive with simplified sidebar toggles.
 
 ## Contributing
 
