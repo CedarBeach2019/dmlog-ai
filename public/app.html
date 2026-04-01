@@ -1142,6 +1142,92 @@
       .char-portrait { width: 48px; height: 48px; font-size: 1.4rem; }
       .dice-spinner { font-size: 2rem; }
     }
+
+    /* ========== ASSET GALLERY ========== */
+    .asset-gallery-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+    }
+    .asset-card {
+      background: var(--bg-void);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius);
+      overflow: hidden;
+      cursor: pointer;
+      transition: border-color var(--transition), transform 0.15s;
+    }
+    .asset-card:hover { border-color: var(--gold-dim); transform: scale(1.03); }
+    .asset-card img {
+      width: 100%;
+      aspect-ratio: 1;
+      object-fit: cover;
+      display: block;
+    }
+    .asset-card .asset-label {
+      padding: 4px 6px;
+      font-size: 0.7rem;
+      color: var(--text-dim);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    /* Lightbox overlay */
+    .asset-lightbox {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.9);
+      z-index: 100;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    .asset-lightbox.open { display: flex; }
+    .asset-lightbox img {
+      max-width: 90vw;
+      max-height: 75vh;
+      border-radius: var(--radius);
+      border: 2px solid var(--gold-dim);
+    }
+    .asset-lightbox .lb-controls {
+      display: flex;
+      gap: 10px;
+      margin-top: 14px;
+    }
+    .asset-lightbox .lb-controls button {
+      background: var(--gold-dim);
+      border: none;
+      color: var(--bg-void);
+      padding: 8px 18px;
+      border-radius: var(--radius);
+      font-weight: 700;
+      cursor: pointer;
+      font-size: 0.85rem;
+    }
+    .asset-lightbox .lb-controls button:hover { background: var(--gold); }
+    .asset-lightbox .lb-close {
+      position: absolute;
+      top: 16px; right: 16px;
+      background: transparent;
+      border: 1px solid var(--text-dim);
+      color: var(--text-primary);
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 1.2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .asset-lightbox .lb-prompt {
+      max-width: 90vw;
+      margin-top: 8px;
+      font-size: 0.75rem;
+      color: var(--text-dim);
+      text-align: center;
+      word-break: break-all;
+    }
   </style>
 </head>
 <body>
@@ -1297,6 +1383,7 @@
           <button class="tab-btn" data-tab="npcs" onclick="switchTab('npcs')">NPCs</button>
           <button class="tab-btn" data-tab="quests" onclick="switchTab('quests')">Quests</button>
           <button class="tab-btn" data-tab="map" onclick="switchTab('map')">Map</button>
+          <button class="tab-btn" data-tab="assets" onclick="switchTab('assets')">Assets</button>
         </div>
 
         <div class="tab-content">
@@ -1447,6 +1534,83 @@
               </ul>
             </div>
           </div>
+
+          <!-- TAB: ASSET GENERATOR & GALLERY -->
+          <div class="tab-pane" id="tab-assets">
+            <div class="section-title">Generate Asset</div>
+            <div class="asset-gen-form">
+              <label style="display:block;margin-bottom:4px;font-size:0.75rem;color:var(--text-secondary)">Type</label>
+              <select id="assetType" style="width:100%;background:var(--bg-void);border:1px solid var(--border-subtle);color:var(--text-primary);padding:6px 8px;border-radius:var(--radius);font-size:0.85rem">
+                <option value="location">Location</option>
+                <option value="monster">Monster</option>
+                <option value="item">Item / Artifact</option>
+                <option value="portrait">Portrait</option>
+                <option value="map">Map</option>
+                <option value="effect">Effect</option>
+              </select>
+
+              <label style="display:block;margin:8px 0 4px;font-size:0.75rem;color:var(--text-secondary)">Subject</label>
+              <input id="assetSubject" type="text" placeholder="e.g. dragon, haunted forest" style="width:100%;background:var(--bg-void);border:1px solid var(--border-subtle);color:var(--text-primary);padding:6px 8px;border-radius:var(--radius);font-size:0.85rem">
+
+              <label style="display:block;margin:8px 0 4px;font-size:0.75rem;color:var(--text-secondary)">Art Style</label>
+              <select id="assetStyle" style="width:100%;background:var(--bg-void);border:1px solid var(--border-subtle);color:var(--text-primary);padding:6px 8px;border-radius:var(--radius);font-size:0.85rem">
+                <option value="japanese_ukiyoe">Ukiyo-e Woodblock (Japan)</option>
+                <option value="chinese_inkwash">Chinese Ink Wash</option>
+                <option value="korean_minhwa">Korean Minhwa Folk Art</option>
+                <option value="indian_miniature">Mughal Miniature (India)</option>
+                <option value="thai_golden">Thai Golden Temple Art</option>
+                <option value="arabian_nights">Arabian Nights Illumination</option>
+                <option value="african_ancestor">African Ancestral Art</option>
+                <option value="norse_viking">Norse Viking Carving</option>
+                <option value="celtic_druid">Celtic Druidic Art</option>
+                <option value="slavic_dark">Slavic Dark Fairy Tale</option>
+                <option value="aztec_sun">Aztec Sun Stone</option>
+                <option value="native_spiritwalker">Native Spirit Walker</option>
+              </select>
+
+              <label style="display:block;margin:8px 0 4px;font-size:0.75rem;color:var(--text-secondary)">Resolution</label>
+              <select id="assetResolution" style="width:100%;background:var(--bg-void);border:1px solid var(--border-subtle);color:var(--text-primary);padding:6px 8px;border-radius:var(--radius);font-size:0.85rem">
+                <option value="oil">Oil Painting</option>
+                <option value="watercolor">Watercolor</option>
+                <option value="sketch">Sketch</option>
+                <option value="photorealistic">Photorealistic</option>
+                <option value="sprite-16">Sprite 16x16</option>
+                <option value="sprite-32">Sprite 32x32</option>
+                <option value="sprite-64">Sprite 64x64</option>
+              </select>
+
+              <button onclick="generateAsset()" style="width:100%;margin-top:10px;padding:8px;background:var(--gold-dim);border:none;color:var(--bg-void);font-weight:700;border-radius:var(--radius);cursor:pointer;font-size:0.85rem;transition:background 0.2s" onmouseover="this.style.background='var(--gold)'" onmouseout="this.style.background='var(--gold-dim)'">Generate</button>
+            </div>
+
+            <!-- Style Mixer -->
+            <div class="section-title" style="margin-top:16px">Style Mixer</div>
+            <div style="display:flex;gap:4px">
+              <select id="mixStyleA" style="flex:1;background:var(--bg-void);border:1px solid var(--border-subtle);color:var(--text-primary);padding:4px;border-radius:var(--radius);font-size:0.75rem">
+                <option value="japanese_ukiyoe">Ukiyo-e</option>
+                <option value="norse_viking">Norse</option>
+                <option value="arabian_nights">Arabian</option>
+                <option value="celtic_druid">Celtic</option>
+                <option value="african_ancestor">African</option>
+                <option value="aztec_sun">Aztec</option>
+              </select>
+              <input id="mixRatio" type="range" min="0" max="100" value="50" style="flex:1;accent-color:var(--gold)">
+              <select id="mixStyleB" style="flex:1;background:var(--bg-void);border:1px solid var(--border-subtle);color:var(--text-primary);padding:4px;border-radius:var(--radius);font-size:0.75rem">
+                <option value="chinese_inkwash">Ink Wash</option>
+                <option value="slavic_dark">Slavic</option>
+                <option value="thai_golden">Thai</option>
+                <option value="indian_miniature">Mughal</option>
+                <option value="native_spiritwalker">Native</option>
+                <option value="korean_minhwa">Korean</option>
+              </select>
+            </div>
+            <button onclick="generateMixedAsset()" style="width:100%;margin-top:6px;padding:6px;background:var(--bg-panel-raised);border:1px solid var(--gold-dim);color:var(--gold);font-size:0.8rem;border-radius:var(--radius);cursor:pointer">Mix & Generate</button>
+
+            <!-- Gallery -->
+            <div class="section-title" style="margin-top:16px">Gallery</div>
+            <div id="assetGallery" class="asset-gallery-grid">
+              <div style="text-align:center;color:var(--text-dim);font-size:0.8rem;padding:20px">No assets yet. Generate one above.</div>
+            </div>
+          </div>
         </div>
       </aside>
     </div>
@@ -1468,6 +1632,18 @@
   </div>
 
   <script src="app.js"></script>
+
+  <!-- Asset Lightbox -->
+  <div class="asset-lightbox" id="assetLightbox">
+    <button class="lb-close" onclick="closeLightbox()">x</button>
+    <img id="lbImage" src="" alt="Asset">
+    <div class="lb-prompt" id="lbPrompt"></div>
+    <div class="lb-controls">
+      <button onclick="downloadAsset()">Download</button>
+      <button onclick="useAsBackdrop()">Use in Campaign</button>
+    </div>
+  </div>
+
   <script>
     /* ================================================================
        DMLog.ai -- Game Interface Logic
@@ -1871,6 +2047,125 @@
       if (location.protocol.startsWith('http')) {
         connectWebSocket();
       }
+      loadGallery();
+    });
+
+    // ========== ASSET GENERATION ==========
+
+    var assetGallery = [];
+
+    function generateAsset() {
+      var type = document.getElementById('assetType').value;
+      var subject = document.getElementById('assetSubject').value.trim();
+      var style = document.getElementById('assetStyle').value;
+      var resolution = document.getElementById('assetResolution').value;
+
+      if (!subject) { alert('Enter a subject for the asset.'); return; }
+
+      fetch('/api/generate/asset', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: type, subject: subject, style: style, resolution: resolution })
+      })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (data.asset) {
+          assetGallery.unshift(data.asset);
+          renderGallery();
+          document.getElementById('assetSubject').value = '';
+        }
+      })
+      .catch(function() {
+        alert('Asset generation failed. Check your connection.');
+      });
+    }
+
+    function generateMixedAsset() {
+      var styleA = document.getElementById('mixStyleA').value;
+      var styleB = document.getElementById('mixStyleB').value;
+      var ratio = parseInt(document.getElementById('mixRatio').value, 10) / 100;
+      var subject = document.getElementById('assetSubject').value.trim() || 'mystical landscape';
+      var resolution = document.getElementById('assetResolution').value;
+
+      fetch('/api/generate/asset', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'location', subject: subject, style: styleA, resolution: resolution, extras: ['mixed with ' + styleB + ' at ' + Math.round(ratio * 100) + '%'] })
+      })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (data.asset) {
+          assetGallery.unshift(data.asset);
+          renderGallery();
+        }
+      })
+      .catch(function() {
+        alert('Mixed asset generation failed.');
+      });
+    }
+
+    function loadGallery() {
+      fetch('/api/gallery')
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          assetGallery = data.assets || [];
+          renderGallery();
+        })
+        .catch(function() { /* gallery empty on standalone */ });
+    }
+
+    function renderGallery() {
+      var grid = document.getElementById('assetGallery');
+      if (!assetGallery.length) {
+        grid.innerHTML = '<div style="text-align:center;color:var(--text-dim);font-size:0.8rem;padding:20px">No assets yet. Generate one above.</div>';
+        return;
+      }
+      grid.innerHTML = '';
+      assetGallery.forEach(function(asset) {
+        var card = document.createElement('div');
+        card.className = 'asset-card';
+        card.innerHTML = '<img src="' + asset.imageUrl + '" alt="' + escapeHtml(asset.subject) + '" loading="lazy"><div class="asset-label">' + escapeHtml(asset.subject) + '</div>';
+        card.onclick = function() { openLightbox(asset); };
+        grid.appendChild(card);
+      });
+    }
+
+    var currentLightboxAsset = null;
+
+    function openLightbox(asset) {
+      currentLightboxAsset = asset;
+      document.getElementById('lbImage').src = asset.imageUrl;
+      document.getElementById('lbPrompt').textContent = asset.prompt || '';
+      document.getElementById('assetLightbox').classList.add('open');
+    }
+
+    function closeLightbox() {
+      document.getElementById('assetLightbox').classList.remove('open');
+      currentLightboxAsset = null;
+    }
+
+    function downloadAsset() {
+      if (!currentLightboxAsset) return;
+      var a = document.createElement('a');
+      a.href = currentLightboxAsset.imageUrl;
+      a.download = 'dmlog-asset-' + currentLightboxAsset.id + '.png';
+      a.target = '_blank';
+      a.click();
+    }
+
+    function useAsBackdrop() {
+      if (!currentLightboxAsset) return;
+      var area = document.getElementById('narrativeArea');
+      area.style.backgroundImage = 'url(' + currentLightboxAsset.imageUrl + ')';
+      area.style.backgroundSize = 'cover';
+      area.style.backgroundPosition = 'center';
+      closeLightbox();
+      addSystemMessage('Scene backdrop updated to: ' + currentLightboxAsset.subject);
+    }
+
+    // Close lightbox on escape
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') closeLightbox();
     });
   </script>
 </body>
