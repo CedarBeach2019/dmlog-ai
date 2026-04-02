@@ -1,249 +1,108 @@
-# DMLog.ai — An AI Dungeon Master That Lives in Your Campaign Repo
+# DMLog.ai
 
-> **Every NPC remembers. Every choice matters. The world evolves.**
+> TTRPG AI Dungeon Master — part of the [Cocapn](https://cocapn.ai) ecosystem
 
-DMLog.ai is an AI-powered TTRPG platform where the repo IS the Dungeon Master. Fork it, customize the DM's soul, deploy, and play. Built on the [cocapn](https://github.com/Lucineer/cocapn) paradigm — the agent lives in the repository, remembers across sessions, and evolves with your campaign.
+![Build](https://img.shields.io/badge/build-passing-brightgreen) ![License](https://img.shields.io/badge/license-MIT-blue) ![TypeScript](https://img.shields.io/badge/TypeScript-81_files-blue) ![Lines](https://img.shields.io/badge/lines-29629-green)
 
-## Quick Start
+## ✨ Features
 
-### 1. Fork and Clone
+- D&D 5e campaign management
+-  combat engine
+-  spell system
+-  loot generator
+-  NPC generator
+-  encounter tables
+-  economy system
+-  faction system
+-  deity system
+-  weather system
+-  procedural maps
+-  quest journal
+-  dialogue trees
+-  character sheets
+-  ability scores
+-  trap system
+-  reputation system
+-  spellbook
+-  monster manual
+-  initiative tracker
+-  magic item generator
+
+## 🚀 Quick Start
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/dmlog-ai.git
+git clone https://github.com/Lucineer/dmlog-ai.git
 cd dmlog-ai
 npm install
-```
-
-### 2. Configure Your LLM
-
-```bash
-# Set your LLM API key in .dev.vars
-echo 'LLM_API_KEY=your-key' > .dev.vars
-# Set the provider: openai, anthropic, or deepseek
-echo 'LLM_PROVIDER=openai' >> .dev.vars
-# Optional: override the model
-echo 'LLM_MODEL=gpt-4o-mini' >> .dev.vars
-```
-
-### 3. Run Locally
-
-```bash
 npx wrangler dev
-open http://localhost:8787
 ```
 
-### 4. Deploy
+## 🤖 Claude Code Integration
+
+Optimized for Claude Code with full agent support:
+
+- **CLAUDE.md** — Complete project context, conventions, and architecture
+- **.claude/agents/** — 3 specialized sub-agents for exploration, architecture, and review
+- **.claude/settings.json** — Permissions and plugin configuration
+
+Just run `claude` in the repo directory and the agent has full context.
+
+## 🏗️ Architecture
+
+| Component | File | Description |
+|-----------|------|-------------|
+| Worker | `src/worker.ts` | Cloudflare Worker with inline HTML |
+| BYOK | `src/lib/byok.ts` | 7 LLM providers, encrypted keys |
+| Health | `/health` | Health check endpoint |
+| Setup | `/setup` | BYOK configuration wizard |
+| Chat | `/api/chat` | LLM chat endpoint |
+| Assets | `/public/*` | KV-served images |
+
+**Zero runtime dependencies.** Pure TypeScript on Cloudflare Workers.
+
+## 🔑 BYOK (Bring Your Own Key)
+
+Supports 7 LLM providers — no vendor lock-in:
+
+- OpenAI (GPT-4, GPT-4o)
+- Anthropic (Claude 3.5, Claude 4)
+- Google (Gemini Pro, Gemini Flash)
+- DeepSeek (Chat, Reasoner)
+- Groq (Llama, Mixtral)
+- Mistral (Large, Medium)
+- OpenRouter (100+ models)
+
+Configuration discovery: URL params → Auth header → Cookie → KV → fail.
+
+## 📦 Deployment
 
 ```bash
 npx wrangler deploy
 ```
 
-Your DM is live. Share the URL with your players.
+Requires `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_API_TOKEN` environment variables.
 
-## Campaign Creation
+## 📊 Stats
 
-Campaigns store world state, characters, NPCs, quests, and narrative history in Cloudflare KV.
+- **81** TypeScript files
+- **29629** lines of code
+- **7** LLM providers
+- **0** runtime dependencies
+- **3** specialized Claude Code agents
 
-### Create a Campaign
+## 🔗 Links
 
-```bash
-curl -X POST https://your-domain/api/campaign \
-  -H 'Content-Type: application/json' \
-  -d '{"name": "Shadows of Thornhaven", "system": "D&D 5e"}'
-```
+- 🌐 **Live**: https://dmlog-ai.magnus-digennaro.workers.dev
+- ❤️ **Health**: https://dmlog-ai.magnus-digennaro.workers.dev/health
+- ⚙️ **Setup**: https://dmlog-ai.magnus-digennaro.workers.dev/setup
+- 🧠 **Cocapn**: https://cocapn.ai
+- 📚 **Papermill**: https://github.com/Lucineer/papermill
+- 📋 **All Repos**: https://github.com/Lucineer
 
-Returns a campaign ID and default world state (starting location, empty character roster).
+## 📜 License
 
-### Load a Campaign
-
-```bash
-curl https://your-domain/api/campaign/<id>
-```
-
-Returns the full world state: characters, NPCs, locations, quests, combat state, and narrative log.
-
-## DM Personality Customization
-
-The DM's personality lives in `cocapn/soul.md`. Edit it, commit it, and the DM changes. It's version-controlled personality.
-
-```markdown
----
-name: grimshaw
-tone: grim
-avatar: 🦴
----
-
-# I Am Your Dungeon Master
-
-You are Grimshaw, a grim and methodical DM. You describe horror in clinical
-detail. You reward cleverness and punish recklessness. You never fudge dice.
-```
-
-### Available Tones
-
-| Tone | Style |
-|------|-------|
-| `dramatic` | Cinematic descriptions, heroic pacing |
-| `humorous` | Witty narration, fourth-wall leans |
-| `grim` | Dark atmosphere, lethal consequences |
-| `mysterious` | Ambiguous clues, slow reveals |
-| `casual` | Conversational, rules-light, fast-paced |
-
-### Canon Enforcement
-
-The DM maintains a **canon ledger** — established facts extracted from narration. Before every response, the system checks for contradictions against this ledger. If a dead NPC is narrated as alive, or a destroyed location is described as intact, the DM flags and corrects the inconsistency.
-
-Canon facts are stored per campaign in KV at `campaign/{id}/canon.json`:
-
-```json
-{
-  "subject": "Grimjaw",
-  "fact": "Grimjaw is a troll chained in the depths below Brindenford",
-  "source": "dm_narration",
-  "timestamp": 1710000000000
-}
-```
-
-## Game System
-
-### Dice
-
-| Input | Result |
-|-------|--------|
-| `d20` | Roll one 20-sided die |
-| `2d6+3` | Roll 2d6, add 3 |
-| `4d6kh3` | Roll 4d6, keep highest 3 |
-| `1d20adv` | d20 with advantage |
-| `1d20dis` | d20 with disadvantage |
-
-All rolls use `crypto.getRandomValues()` — verifiable, auditable, fair.
-
-### Combat
-
-- **Initiative**: d20 + DEX modifier
-- **Attack**: d20 + proficiency + STR/DEX vs AC
-- **Damage**: weapon dice + modifier, doubled on crit
-- **Conditions**: 15 types (blinded, charmed, frightened, grappled, paralyzed, etc.)
-- **Death saves**: three successes stabilize, three failures die
-
-### Character Creation
-
-- **Races**: Human, Elf, Dwarf, Halfling, Gnome, Half-Orc, Tiefling, Dragonborn
-- **Classes**: All 12 D&D 5e classes
-- **Ability Scores**: Standard array, point buy, or 4d6 drop lowest
-- **Equipment**: Weapons, armor, potions, scrolls, magical items with attunement
-
-### World Systems
-
-- Connected location graph with directional travel
-- Day/night cycle with time-aware descriptions
-- Dynamic weather (clear, rain, fog, storm, snow)
-- Random encounter tables during travel
-- NPC generation with backstories, motivations, and relationship webs
-
-## Pro DM Features
-
-### Story Snapshots
-
-Capture and share campaign state at any point:
-
-```bash
-curl -X POST https://your-domain/api/campaign/<id>/snapshot
-```
-
-Returns a full snapshot including world state, character sheets, quest log, recent narrative, and canon facts — both as JSON and as formatted text for sharing.
-
-### Multi-Channel Play
-
-- **Web**: Full immersive UI with parchment theme, dice animations, and combat effects
-- **Telegram**: Set `TELEGRAM_BOT_TOKEN` in `.dev.vars`, register webhook at `/api/channels/telegram`
-- **Discord**: Set `DISCORD_PUBLIC_KEY` and `DISCORD_BOT_TOKEN`, register commands at `/api/channels/discord/register`
-
-### Streaming Responses
-
-The chat endpoint supports Server-Sent Events for real-time narration:
-
-```bash
-curl -X POST https://your-domain/api/chat?stream=true \
-  -H 'Content-Type: application/json' \
-  -d '{"message": "I open the door", "campaignId": "..."}'
-```
-
-Returns `text/event-stream` with `chunk`, `done`, and `canon_warning` events.
-
-### A2A Protocol
-
-Coordinate multiple campaigns in a shared world: broadcast events, migrate NPCs, enable cross-campaign trade and shared quests.
-
-## API Reference
-
-### Chat
-
-```
-POST /api/chat
-Body: { message: string, campaignId?: string, characterId?: string }
-Query: ?stream=true for SSE streaming
-Response: { narration: string, intent: string, canonWarning?: string, worldState: object }
-```
-
-### Campaigns
-
-```
-POST   /api/campaign                  — Create campaign
-GET    /api/campaign                  — List campaigns
-GET    /api/campaign/:id              — Get world state
-DELETE /api/campaign/:id              — Delete campaign
-POST   /api/campaign/:id/snapshot     — Create story snapshot
-```
-
-### WebSocket
-
-```
-ws://host/ws
-Send:    { type: 'join' | 'chat' | 'ping', payload: { ... } }
-Receive: { type: 'joined' | 'start' | 'chunk' | 'done' | 'error', ... }
-```
-
-## Architecture
-
-DMLog.ai uses a **Tripartite Architecture**:
-
-| Layer | Name | Role |
-|-------|------|------|
-| **Pathos** | The DM | Personality, narrative voice, story generation |
-| **Logos** | The World | State persistence, rules engine, consistency, memory |
-| **Ethos** | The Action | Dice rolling, UI rendering, visual/audio effects |
-
-### Tech Stack
-
-- **Runtime**: Cloudflare Workers (Edge)
-- **Storage**: Cloudflare KV (world state, campaigns, canon)
-- **Language**: TypeScript (strict, ESM)
-- **Frontend**: Vanilla HTML/CSS/JS (no build step)
-- **LLM**: Multi-provider (OpenAI, Anthropic, DeepSeek)
-
-## Screenshots
-
-### Landing Page
-A dark, gold-accented landing page with Cinzel headings, parchment textures, and a demo of a live session transcript showing DM narration, player actions, and dice rolls.
-
-### Game Interface
-Three-column layout: character sheet (left), narrative feed (center), game tools (right). Parchment-textured DM messages, d20 spin animations on dice rolls, red flash for damage, gold glow for healing. Portrait avatars on every message. Mobile-responsive with simplified sidebar toggles.
-
-## Contributing
-
-1. Fork the repo
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'feat: add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-Commits by agentic workers use `Author: Superinstance`.
-
-## License
-
-MIT License — see [LICENSE](./LICENSE)
+MIT
 
 ---
 
-Built with [cocapn](https://github.com/Lucineer/cocapn) — the repo IS the agent.
+Built with ❤️ by [SuperInstance](https://github.com/superinstance)
