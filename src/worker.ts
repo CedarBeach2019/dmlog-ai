@@ -1,3 +1,5 @@
+import { selectModel } from './lib/model-router.js';
+import { trackConfidence, getConfidence } from './lib/confidence-tracker.js';
 import { softActualize, confidenceScore } from './lib/soft-actualize.js';
 import { deadbandCheck, deadbandStore, getEfficiencyStats } from './lib/deadband.js';
 import { logResponse } from './lib/response-logger.js';
@@ -1020,6 +1022,12 @@ async function handleRequest(request: Request, env: Env): Promise<Response> {
   const url = new URL(request.url);
   const path = url.pathname;
 
+
+  // Confidence tracking
+  if (path === '/api/confidence') {
+    const scores = await getConfidence(env);
+    return new Response(JSON.stringify(scores), { headers: { 'Content-Type': 'application/json', ...corsHeaders() } });
+  }
   // CORS preflight
   if (request.method === 'OPTIONS') {
     return new Response(null, { status: 204, headers: corsHeaders() });
@@ -1467,7 +1475,9 @@ async function handleRequest(request: Request, env: Env): Promise<Response> {
       }
 
       // Non-streaming: call LLM and return JSON
-      const narration = await callLLM(messages, env);
+      const cached = await deadbandCheck(env, JSON.stringify(messages));
+      let narration;
+      if (cached) { narration = cached; } else { narration = await callLLM(messages, env); await deadbandStore(env, JSON.stringify(messages), narration); }
 
       // Canon check
       const contradiction = await checkCanonConsistency(campaignId, body.message, narration, env);
