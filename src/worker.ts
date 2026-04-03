@@ -1,3 +1,5 @@
+import { addNode, addEdge, traverse, crossDomainQuery, findPath, domainStats, getDomainNodes } from './lib/knowledge-graph.js';
+import { loadSeedIntoKG, FLEET_REPOS, loadAllSeeds } from './lib/seed-loader.js';
 import { evapPipeline, getEvapReport, getLockStats } from './lib/evaporation-pipeline.js';
 import { selectModel } from './lib/model-router.js';
 import { trackConfidence, getConfidence } from './lib/confidence-tracker.js';
@@ -1179,6 +1181,22 @@ async function handleRequest(request: Request, env: Env): Promise<Response> {
     });
   }
 
+    // ── Knowledge Graph (Phase 4B) ─────────────────────────────
+    if (path === '/api/kg' && method === 'GET') {
+      const d = url.searchParams.get('domain') || 'dmlog-ai';
+      return json({ domain: d, nodes: await getDomainNodes(env, d) });
+    }
+    if (path === '/api/kg/explore' && method === 'GET') {
+      const nid = url.searchParams.get('node');
+      if (!nid) return badRequest('node required');
+      return json(await traverse(env, nid, parseInt(url.searchParams.get('depth') || '2') || 2, url.searchParams.get('domain') || undefined));
+    }
+    if (path === '/api/kg/cross' && method === 'GET') {
+      return json(await crossDomainQuery(env, url.searchParams.get('query') || '', url.searchParams.get('domain') || 'dmlog-ai'));
+    }
+    if (path === '/api/kg/domains' && method === 'GET') return json(await domainStats(env));
+    if (path === '/api/kg/sync' && method === 'POST') return json(await loadAllSeeds(env, FLEET_REPOS));
+    if (path === '/api/kg/seed' && method === 'POST') { const b = await request.json(); return json(await loadSeedIntoKG(env, b, b.domain || 'dmlog-ai')); }
   if (path === "/api/seed" && request.method === "GET") {
     return new Response(JSON.stringify({ domain: "dmlog-ai", description: "AI Dungeon Master — D&D campaigns, NPC dialogue, combat", seedVersion: "2024.04",
       rules: ["D&D 5e core", "advantage/disadvantage", "bounded accuracy", "proficiency bonus", "saving throws", "skill checks"],
