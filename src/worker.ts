@@ -6,6 +6,10 @@ import { deadbandCheck, deadbandStore, getEfficiencyStats } from './lib/deadband
 import { evapPipeline } from './lib/evaporation-pipeline.js';
 
 import { logResponse } from './lib/response-logger.js';
+
+import { storePattern, findSimilar, getNeighborhood, crossRepoTransfer, listPatterns } from './lib/structural-memory.js';
+import { exportPatterns, importPatterns, fleetSync } from './lib/cross-cocapn-bridge.js';
+
 /**
  * DMLogWorker — Main Cloudflare Worker for DMLog.ai.
  *
@@ -270,6 +274,37 @@ async function callLLM(messages: LLMMessage[], env: Env, stream?: (chunk: string
     // Default: OpenAI-compatible (covers OpenAI and DeepSeek)
     return await callOpenAICompatible(messages, apiKey, model, provider, stream);
   } catch (err) {
+    // ── Phase 4: Structural Memory Routes ──
+    if (url.pathname === '/api/memory' && request.method === 'GET') {
+      const source = url.searchParams.get('source') || undefined;
+      const patterns = await listPatterns(env, source);
+      return new Response(JSON.stringify(patterns), { headers: jsonHeaders });
+    }
+    if (url.pathname === '/api/memory' && request.method === 'POST') {
+      const body = await request.json();
+      await storePattern(env, body);
+      return new Response(JSON.stringify({ ok: true, id: body.id }), { headers: jsonHeaders });
+    }
+    if (url.pathname === '/api/memory/similar') {
+      const structure = url.searchParams.get('structure') || '';
+      const threshold = parseFloat(url.searchParams.get('threshold') || '0.7');
+      const similar = await findSimilar(env, structure, threshold);
+      return new Response(JSON.stringify(similar), { headers: jsonHeaders });
+    }
+    if (url.pathname === '/api/memory/transfer') {
+      const fromRepo = url.searchParams.get('from') || '';
+      const toRepo = url.searchParams.get('to') || '';
+      const problem = url.searchParams.get('problem') || '';
+      const transfers = await crossRepoTransfer(env, fromRepo, toRepo, problem);
+      return new Response(JSON.stringify(transfers), { headers: jsonHeaders });
+    }
+    if (url.pathname === '/api/memory/sync' && request.method === 'POST') {
+      const body = await request.json();
+      const repos = body.repos || [];
+      const result = await fleetSync(env, repos);
+      return new Response(JSON.stringify(result), { headers: jsonHeaders });
+    }
+
     console.error(`[DMLog] LLM call failed (${provider}):`, err);
     return generateFallbackNarration(messages);
   }
