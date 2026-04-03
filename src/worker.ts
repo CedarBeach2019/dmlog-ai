@@ -1674,13 +1674,149 @@ function parseHistoryMessages(history: string): LLMMessage[] {
 }
 
 // ---------------------------------------------------------------------------
+// Demo Landing Page
+// ---------------------------------------------------------------------------
+
+function generateDemoHTML(): string {
+  return `<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>DMLog.ai — AI Dungeon Master Live Demo</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Georgia,'Times New Roman',serif;background:#1a1a2e;color:#e0e0e0;min-height:100vh;display:flex;flex-direction:column}
+a{color:#c9a23c;text-decoration:none}
+a:hover{text-decoration:underline}
+.hero{text-align:center;padding:2rem 1rem 1rem;background:linear-gradient(180deg,#0f0f23 0%,#1a1a2e 100%);border-bottom:2px solid #c9a23c}
+.hero h1{color:#c9a23c;font-size:clamp(1.8rem,5vw,3rem);letter-spacing:2px;text-transform:uppercase}
+.hero h1 span{color:#e0e0e0;font-weight:400;font-size:0.5em;display:block;letter-spacing:4px;margin-top:0.3rem}
+.hero p{color:#888;margin-top:0.5rem;font-size:0.95rem}
+.scene-panel{flex:1;max-width:800px;width:100%;margin:1rem auto;padding:0 1rem;overflow-y:auto}
+.chat{display:flex;flex-direction:column;gap:0.75rem;padding:1rem 0}
+.bubble{max-width:85%;padding:0.75rem 1rem;border-radius:12px;line-height:1.55;font-size:0.95rem;position:relative;animation:fadeSlide 0.5s ease both}
+.bubble.dm{align-self:flex-start;background:#1e1e3a;border-left:3px solid #c9a23c;border-bottom-left-radius:2px}
+.bubble.dm .role{color:#c9a23c;font-weight:bold;font-size:0.8rem;text-transform:uppercase;letter-spacing:1px;margin-bottom:0.3rem;display:block}
+.bubble.player{align-self:flex-end;background:#162447;border-right:3px solid #4a9eff;border-bottom-right-radius:2px}
+.bubble.player .role{color:#4a9eff;font-weight:bold;font-size:0.8rem;text-transform:uppercase;letter-spacing:1px;margin-bottom:0.3rem;display:block}
+.bubble.system{align-self:center;background:rgba(201,162,60,0.1);border:1px solid #c9a23c44;border-radius:8px;padding:0.4rem 1rem;font-size:0.85rem;color:#c9a23c;text-align:center}
+.dice{display:inline-flex;align-items:center;gap:0.3rem;background:#2a0a0a;color:#ff6b6b;padding:0.15rem 0.5rem;border-radius:6px;font-family:monospace;font-weight:bold;font-size:0.85rem;margin:0 0.15rem;border:1px solid #ff6b6b44}
+.dice.crit{background:#0a2a0a;color:#4ade80;border-color:#4ade8044}
+.dice.fail{background:#2a2a0a;color:#fbbf24;border-color:#fbbf2444}
+@keyframes fadeSlide{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.bubble:nth-child(1){animation-delay:0s}
+.bubble:nth-child(2){animation-delay:0.6s}
+.bubble:nth-child(3){animation-delay:1.2s}
+.bubble:nth-child(4){animation-delay:1.8s}
+.bubble:nth-child(5){animation-delay:2.4s}
+.bubble:nth-child(6){animation-delay:3s}
+.bubble:nth-child(7){animation-delay:3.6s}
+.bubble:nth-child(8){animation-delay:4.2s}
+.bubble:nth-child(9){animation-delay:4.8s}
+.bubble:nth-child(10){animation-delay:5.4s}
+.bubble:nth-child(11){animation-delay:6s}
+.bubble:nth-child(12){animation-delay:6.6s}
+.cta{text-align:center;padding:1.5rem 1rem 1rem;max-width:800px;width:100%;margin:0 auto}
+.cta h2{color:#c9a23c;font-size:1.4rem;margin-bottom:0.5rem}
+.cta p{color:#888;margin-bottom:1rem;font-size:0.9rem}
+.cta-buttons{display:flex;gap:0.75rem;justify-content:center;flex-wrap:wrap}
+.cta-buttons a,.cta-buttons button{padding:0.7rem 1.5rem;border-radius:8px;font-family:inherit;font-size:0.95rem;cursor:pointer;transition:all 0.2s;border:2px solid #c9a23c;background:transparent;color:#c9a23c}
+.cta-buttons a:hover,.cta-buttons button:hover{background:#c9a23c;color:#1a1a2e}
+.cta-buttons .primary{background:#c9a23c;color:#1a1a2e;font-weight:bold}
+.cta-buttons .primary:hover{background:#d4b44a;border-color:#d4b44a}
+.byok-bar{display:flex;gap:0.5rem;justify-content:center;align-items:center;flex-wrap:wrap;margin-top:1rem}
+.byok-bar input{background:#0f0f23;border:1px solid #333;color:#e0e0e0;padding:0.6rem 1rem;border-radius:8px;font-family:monospace;font-size:0.85rem;width:280px}
+.byok-bar input::placeholder{color:#555}
+.byok-bar button{background:#c9a23c;color:#1a1a2e;border:none;padding:0.6rem 1.2rem;border-radius:8px;font-weight:bold;cursor:pointer;font-family:inherit}
+.byok-bar button:hover{background:#d4b44a}
+.actions{text-align:center;padding:0.75rem 1rem;max-width:800px;width:100%;margin:0 auto}
+.actions a{color:#c9a23c;margin:0 1rem;font-size:0.85rem}
+.fork-bar{background:#0f0f23;border-top:1px solid #333;padding:1.5rem 1rem;text-align:center}
+.fork-bar h3{color:#888;font-size:0.8rem;text-transform:uppercase;letter-spacing:2px;margin-bottom:1rem}
+.fork-buttons{display:flex;gap:0.75rem;justify-content:center;flex-wrap:wrap;align-items:center}
+.fork-btn{display:inline-flex;align-items:center;gap:0.4rem;padding:0.5rem 1rem;background:#1e1e3a;border:1px solid #333;border-radius:8px;color:#e0e0e0;font-size:0.85rem;text-decoration:none;transition:border-color 0.2s}
+.fork-btn:hover{border-color:#c9a23c;text-decoration:none}
+.fork-btn svg{fill:currentColor;width:16px;height:16px}
+.clone-box{background:#0f0f23;border:1px solid #333;border-radius:8px;padding:0.75rem 1rem;margin-top:1rem;max-width:600px;margin-left:auto;margin-right:auto;display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;justify-content:center}
+.clone-box code{background:#1a1a2e;padding:0.4rem 0.75rem;border-radius:6px;font-family:monospace;font-size:0.78rem;color:#4ade80;white-space:nowrap;overflow-x:auto;max-width:100%}
+.badges{display:flex;gap:0.75rem;justify-content:center;margin-top:0.75rem;flex-wrap:wrap}
+.badges img{height:24px}
+@media(max-width:600px){.bubble{max-width:92%;font-size:0.88rem}.clone-box code{font-size:0.7rem;white-space:normal}}
+</style></head><body>
+
+<div class="hero">
+  <h1>DMLog.ai <span>AI Dungeon Master</span></h1>
+  <p>Watch a live D&amp;D scene unfold — then bring your own key and play</p>
+</div>
+
+<div class="scene-panel">
+  <div class="chat">
+    <div class="bubble system">\u2694\ufe0f The Caverns of Ashenmoor — Round 3</div>
+    <div class="bubble dm"><span class="role">\U0001f3ad Dungeon Master</span>The dragon's lair reeks of sulfur and ancient malice. <em>Vorathrex</em>, an adult red dragon, coils atop a mound of stolen treasure — gold coins cascading like water with every shift of her massive frame. Her amber eyes lock onto your party. <strong>"You dare bring steel into my domain?"</strong> Smoke curls between her teeth. The cavern walls glow faintly orange from veins of molten rock. The air itself seems to breathe, hot and oppressive.</div>
+    <div class="bubble player"><span class="role">\u2694\ufe0f Kael — Human Fighter</span>I draw my longsword and step forward, shield raised. "We're here for the Scale of Truth, Vorathrex. Nothing more." I want to see if I can hold her attention.</div>
+    <div class="bubble system">\U0001f3b2 Kael rolls Intimidation <span class="dice">d20+3 = <strong>17</strong></span> — Success!</div>
+    <div class="bubble dm"><span class="role">\U0001f3ad Dungeon Master</span>Vorathrex's eyes narrow. For a heartbeat — just one — something flickers behind the ancient malice. <em>Respect? Fear?</em> She tilts her enormous head, and a low rumble emanates from deep within her chest. <strong>"Bold words for a creature that lives a mere century."</strong> But she doesn't attack. Not yet. Her tail sweeps behind her, scattering coins. <em>The rest of you feel the temperature drop slightly — she's listening.</em></div>
+    <div class="bubble player"><span class="role">\U0001f52e Lyra — Elf Wizard</span>While she's focused on Kael, I begin whispering the incantation for <em>Dimension Door</em>. I need to get behind her — to the pedestal where the Scale of Truth sits, glowing faintly blue in the treasure pile. <span class="dice">d20+7 = <strong>14</strong></span> Arcana check to gauge the distance.</div>
+    <div class="bubble dm"><span class="role">\U0001f3ad Dungeon Master</span>Lyra, your fingers trace the familiar sigils in the air. The weave responds — but Vorathrex's head snaps toward you mid-cast. <strong>"A weaver of tricks,"</strong> she hisses. Her eyes flash white-hot. She's going to beat you to it. <em>@Kael, @Theron, @Shadow — you have maybe six seconds before all hell breaks loose. What do you do?</em></div>
+    <div class="bubble player"><span class="role">\U0001f941 Shadow — Halfling Rogue</span>I'm already moving. While Lyra was casting, I slipped into the shadows along the cavern wall. Now I sprint for the treasure pile — I need to grab the Scale before anyone breathes fire on it. <span class="dice">d20+9 = <strong class="crit">NAT 20!</strong></span> <span class="dice crit">\u2b50 Stealth — Critical Success!</span></div>
+    <div class="bubble dm"><span class="role">\U0001f3ad Dungeon Master</span><em>Critical. The dice have spoken.</em> Shadow, you move like smoke. One moment you're pressed against the cavern wall, the next you're knee-deep in gold coins, fingers closing around the Scale of Truth. It's ice-cold and hums with power. Vorathrex roars — a sound that shakes the entire mountain. Treasure cascades around you. But you have it. <strong>The Scale is yours.</strong> <em>Now you just need to survive the next thirty seconds.</em></div>
+    <div class="bubble player"><span class="role">\u271d\ufe0f Theron — Dwarf Cleric</span>I raise my holy symbol and call upon the Dawnfather. "Shield of Faith!" I cast it on Shadow — she's going to need it. Then I ready my Sacred Flame, aiming for Vorathrex's eyes. <span class="dice">d20+5 = <strong>11</strong></span></div>
+    <div class="bubble dm"><span class="role">\U0001f3ad Dungeon Master</span>A warm golden light envelops Shadow <em>(+2 AC from Shield of Faith)</em> just as Vorathrex inhales deeply. The cavern dims as firelight is literally sucked into her maw. Theron, your Sacred Flame flickers and dies — the heat of the lair absorbs it. This is it. Vorathrex unleashes a torrent of flame. <span class="dice">d6\u00d78 Fire Breath <strong>= 31 damage</strong></span> Kael and Lyra, you're in the blast zone. <em>Lyra's Dimension Door shimmers — she can escape, but it'll cost her the spell entirely. Kael, that shield won't be enough alone...</em></div>
+    <div class="bubble system">\u26a0\ufe0f The dragon's breath weapon fills the cavern. The party faces annihilation.</div>
+  </div>
+</div>
+
+<div class="cta">
+  <h2>Your Turn</h2>
+  <p>This is what a DMLog.ai session looks like. The AI DM narrates, tracks rules, and reacts to your choices.</p>
+  <div class="cta-buttons">
+    <a href="/setup" class="primary">\u2699\ufe0f Set Up Your Game (BYOK)</a>
+    <a href="/app">\U0001f3ae Enter the Realm</a>
+  </div>
+  <div class="byok-bar">
+    <input type="password" id="byok-key" placeholder="Paste your OpenAI/Anthropic API key...">
+    <button onclick="window.location.href='/setup'">Connect</button>
+  </div>
+</div>
+
+<div class="actions">
+  <a href="/setup">\u2699\ufe0f Setup</a>
+  <a href="/health">\u2764\ufe0f Health</a>
+  <a href="/api/seed">\U0001f331 Seed</a>
+</div>
+
+<div class="fork-bar">
+  <h3>Open Source — Self-Host in 60 Seconds</h3>
+  <div class="fork-buttons">
+    <a class="fork-btn" href="https://github.com/Lucineer/dmlog-ai/fork" target="_blank">
+      <svg viewBox="0 0 16 16"><path d="M5 3.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0zm0 2.122a2.25 2.25 0 1 0-1.5 0v.878A2.25 2.25 0 0 0 5.75 8.5h1.5v2.128a2.251 2.251 0 1 0 1.5 0V8.5h1.5a2.25 2.25 0 0 0 2.25-2.25v-.878a2.25 2.25 0 1 0-1.5 0v.878a.75.75 0 0 1-.75.75h-4.5A.75.75 0 0 1 5 6.25v-.878zm3.75 7.378a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0zm3-8.75a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5z"/></svg>
+      Fork
+    </a>
+    <a class="fork-btn" href="https://github.com/Lucineer/dmlog-ai" target="_blank">
+      <svg viewBox="0 0 16 16"><path d="M8 .25a.75.75 0 0 1 .673.418l1.882 3.815 4.21.612a.75.75 0 0 1 .416 1.279l-3.046 2.97.719 4.192a.751.751 0 0 1-1.088.791L8 12.347l-3.766 1.98a.75.75 0 0 1-1.088-.79l.72-4.194L.818 6.374a.75.75 0 0 1 .416-1.28l4.21-.611L7.327.668A.75.75 0 0 1 8 .25zm0 2.445L6.615 5.5a.75.75 0 0 1-.564.41l-3.097.45 2.24 2.184a.75.75 0 0 1 .216.664l-.528 3.084 2.769-1.456a.75.75 0 0 1 .698 0l2.77 1.456-.53-3.084a.75.75 0 0 1 .216-.664l2.24-2.183-3.096-.45a.75.75 0 0 1-.564-.41L8 2.694z"/></svg>
+      Star
+    </a>
+  </div>
+  <div class="clone-box">
+    <span style="color:#888;font-size:0.8rem">Quick Deploy:</span>
+    <code>git clone https://github.com/Lucineer/dmlog-ai.git &amp;&amp; cd dmlog-ai &amp;&amp; npm install &amp;&amp; npx wrangler deploy</code>
+  </div>
+  <div class="badges">
+    <a href="https://github.com/Lucineer/dmlog-ai" target="_blank"><img src="https://img.shields.io/badge/Cloudflare-Workers-orange?logo=cloudflare" alt="Deploy to Cloudflare"></a>
+    <a href="https://github.com/Lucineer/dmlog-ai" target="_blank"><img src="https://img.shields.io/badge/Docker-Ready-blue?logo=docker" alt="Docker Ready"></a>
+    <a href="https://github.com/Lucineer/dmlog-ai" target="_blank"><img src="https://img.shields.io/badge/License-MIT-green" alt="MIT License"></a>
+  </div>
+</div>
+
+</body></html>`;
+}
+
+// ---------------------------------------------------------------------------
 // Static Asset Serving
 // ---------------------------------------------------------------------------
 
 function serveStatic(filename: string, contentType: string): Response {
   // Placeholder: In production these would come from ASSETS binding or bundled HTML
   const placeholder: Record<string, string> = {
-    'index.html': `<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>DMLog.ai — Your AI Dungeon Master</title><link rel="stylesheet" href="/css/style.css"></head><body><div id="app"><h1>DMLog.ai</h1><p>Your AI-powered Dungeon Master awaits.</p><a href="/app">Enter the Realm</a></div></body></html>`,
+    'index.html': generateDemoHTML(),
     'app.html': `<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>DMLog.ai — Game</title><link rel="stylesheet" href="/css/style.css"></head><body><div id="game"></div><script src="/js/app.js"></script></body></html>`,
     'style.css': `/* DMLog.ai Styles */\n* { box-sizing: border-box; margin: 0; padding: 0; }\nbody { font-family: Georgia, 'Times New Roman', serif; background: #1a1a2e; color: #e0e0e0; }\n#app { max-width: 800px; margin: 2rem auto; padding: 2rem; text-align: center; }\nh1 { color: #d4af37; font-size: 2.5rem; margin-bottom: 1rem; }\na { color: #d4af37; }\n`,
     'app.js': `/* DMLog.ai Client */\nconsole.log('DMLog.ai loaded');\n`,
