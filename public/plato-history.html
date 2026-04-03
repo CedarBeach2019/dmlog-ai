@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PLATO & D&D — The Roots of Interactive Storytelling | DMLog.ai</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: #0f0f1a; color: #e0e0e0; line-height: 1.7; }
+  .container { max-width: 800px; margin: 0 auto; padding: 2rem; }
+  a { color: #818cf8; text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  h1 { font-size: 2rem; color: #fff; margin-bottom: 0.5rem; }
+  h2 { font-size: 1.4rem; color: #a5b4fc; margin: 2rem 0 0.5rem; border-left: 3px solid #6366f1; padding-left: 0.75rem; }
+  .subtitle { color: #888; margin-bottom: 2rem; }
+  .timeline { position: relative; padding-left: 2rem; margin: 1rem 0; }
+  .timeline::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 2px; background: #6366f1; }
+  .event { position: relative; margin-bottom: 1.5rem; }
+  .event::before { content: ''; position: absolute; left: -2rem; top: 0.5rem; width: 12px; height: 12px; border-radius: 50%; background: #6366f1; border: 2px solid #0f0f1a; }
+  .event .year { font-weight: bold; color: #f59e0b; }
+  blockquote { border-left: 3px solid #6366f1; padding: 0.5rem 1rem; margin: 1rem 0; background: rgba(99,102,241,0.1); border-radius: 0 4px 4px 0; }
+  .card { background: #1a1a2e; border-radius: 8px; padding: 1.5rem; margin: 1rem 0; }
+  .nav { padding: 1rem 2rem; background: #1a1a2e; border-bottom: 1px solid #2a2a4a; }
+  .nav a { margin-right: 1.5rem; }
+  code { background: #2a2a4a; padding: 2px 6px; border-radius: 4px; font-size: 0.9em; }
+  .connection { background: linear-gradient(135deg, #1a1a2e 0%, #2d1b4e 100%); border: 1px solid #6366f1; border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; }
+</style>
+</head>
+<body>
+<nav class="nav">
+  <a href="/">← DMLog.ai</a>
+  <a href="/plato">TUTOR Explorer</a>
+  <a href="/api/encounter/graph">Demo Graph</a>
+</nav>
+<div class="container">
+  <h1>From PLATO to Dragon's Lairs</h1>
+  <p class="subtitle">How 1960s educational software gave birth to interactive storytelling — and why it matters for AI-powered D&D.</p>
+
+  <h2>PLATO: The First Networked Community</h2>
+  <div class="timeline">
+    <div class="event"><span class="year">1960</span> — PLATO (Programmed Logic for Automatic Teaching Operations) launches at the University of Illinois. Built on the ILLIAC I supercomputer, it was designed for computer-aided instruction.</div>
+    <div class="event"><span class="year">1969</span> — PLATO IV introduces plasma displays, touch panels, and real-time multiplayer capabilities. It becomes the world's first online community.</div>
+    <div class="event"><span class="year">1972</span> — Paul Tenczar creates the <strong>TUTOR</strong> programming language, designed specifically for interactive educational content with branching logic.</div>
+  </div>
+
+  <h2>The TUTOR Language: Branching Logic</h2>
+  <p>TUTOR's key innovation was <strong>conditional branching</strong> — content that changed based on student responses:</p>
+  <div class="card">
+    <code>unit next</code><br>
+    <code>at 1510</code><br>
+    <code>write What is the capital of France?</code><br>
+    <code>ans (Paris)</code><br>
+    <code>next next2</code><br>
+    <code>write Wrong. Try again.</code><br>
+    <code>next next</code>
+  </div>
+  <p>This simple pattern — <strong>present → evaluate → branch</strong> — is the DNA of every interactive system that followed. TUTOR supported:</p>
+  <ul style="margin-left: 1.5rem; margin-bottom: 1rem;">
+    <li><strong>Help loops</strong> — when students struggled, TUTOR could jump to remedial content and return</li>
+    <li><strong>Retry counters</strong> (the <code>n1</code> variable) — track attempts and escalate difficulty</li>
+    <li><strong>Conditional jumps</strong> — different paths based on student performance</li>
+    <li><strong>Adaptive pacing</strong> — the system could slow down or speed up per-student</li>
+  </ul>
+
+  <h2>MUDs: From PLATO to Dungeons</h2>
+  <p>PLATO users created some of the earliest multiplayer games:</p>
+  <div class="timeline">
+    <div class="event"><span class="year">1975</span> — <strong>Empire</strong> becomes the first networked multiplayer game on PLATO.</div>
+    <div class="event"><span class="year">1975</span> — <strong>Dungeons of Pergamon</strong>, <strong>Moria</strong>, and <strong>Oubliette</strong> bring D&D-style dungeon crawling to PLATO terminals. Players explore, fight monsters, and level up in real-time.</div>
+    <div class="event"><span class="year">1978</span> — Inspired by PLATO games, Roy Trubshaw creates <strong>MUD1</strong> at Essex University — the first MUD (Multi-User Dungeon). The genre name itself comes from D&D.</div>
+    <div class="event"><span class="year">1980s</span> — MUDs proliferate across ARPANET and university networks. The branching, stateful, multiplayer interaction model is born.</div>
+  </div>
+
+  <div class="connection">
+    <strong>🔗 The Direct Lineage:</strong> PLATO → PLATO RPGs → MUD1 → MMORPGs (Ultima Online, EverQuest, World of Warcraft) → AI Dungeon Masters. Every multiplayer online game descends from PLATO's multiplayer architecture.
+  </div>
+
+  <h2>Why This Matters for DMLog.ai</h2>
+  <p>Our <strong>Encounter Engine</strong> directly applies TUTOR's 50-year-old design principles:</p>
+  <div class="card">
+    <table style="width:100%; border-collapse: collapse;">
+      <tr><td style="padding: 0.5rem; border-bottom: 1px solid #2a2a4a;"><strong>TUTOR Concept</strong></td><td style="padding: 0.5rem; border-bottom: 1px solid #2a2a4a;"><strong>DMLog Encounter</strong></td></tr>
+      <tr><td style="padding: 0.5rem; border-bottom: 1px solid #2a2a4a;"><code>unit</code> blocks</td><td style="padding: 0.5rem; border-bottom: 1px solid #2a2a4a;">EncounterUnit (story beats)</td></tr>
+      <tr><td style="padding: 0.5rem; border-bottom: 1px solid #2a2a4a;"><code>ans</code> evaluation</td><td style="padding: 0.5rem; border-bottom: 1px solid #2a2a4a;">Choice routing & skill checks</td></tr>
+      <tr><td style="padding: 0.5rem; border-bottom: 1px solid #2a2a4a;"><code>n1</code> retry counter</td><td style="padding: 0.5rem; border-bottom: 1px solid #2a2a4a;">Retry tracking per unit</td></tr>
+      <tr><td style="padding: 0.5rem; border-bottom: 1px solid #2a2a4a;">Help loops</td><td style="padding: 0.5rem; border-bottom: 1px solid #2a2a4a;">Hint system with return-to-context</td></tr>
+      <tr><td style="padding: 0.5rem;">Conditional jumps</td><td style="padding: 0.5rem;">Condition-based choice availability</td></tr>
+    </table>
+  </div>
+
+  <blockquote>
+    "The best ideas in computing are often the oldest. PLATO's TUTOR language figured out adaptive, branching, stateful interaction in 1972. We're just adding AI to make it feel alive."
+  </blockquote>
+
+  <h2>The Future: State Machines + AI</h2>
+  <p>Traditional game engines use hardcoded branching. Our approach combines:</p>
+  <ol style="margin-left: 1.5rem; margin-bottom: 1rem;">
+    <li><strong>Deterministic structure</strong> — PLATO-style state machines guarantee no dead-ends (fail-forward)</li>
+    <li><strong>AI narration</strong> — LLMs generate rich prose, dynamic NPC dialogue, and environmental descriptions</li>
+    <li><strong>Player agency</strong> — meaningful choices that actually change the story</li>
+    <li><strong>DM evolution</strong> — the graph itself can grow during play, adding new paths based on player creativity</li>
+  </ol>
+
+  <p style="margin-top: 2rem; color: #888; font-size: 0.9rem;">
+    <a href="/plato">Explore the TUTOR Logic Explorer →</a> ·
+    <a href="/api/encounter/graph">View the demo encounter graph →</a> ·
+    <a href="/">Back to DMLog.ai</a>
+  </p>
+</div>
+</body>
+</html>

@@ -1052,6 +1052,85 @@ async function handleRequest(request: Request, env: Env): Promise<Response> {
 
   // ----- Health check -----
   // --- Seed Route ---
+  // ----- Encounter Engine (PLATO TUTOR branching) -----
+  const enc = {
+    engine: await import('./lib/encounter-engine.js'),
+    demo: await import('./data/demo-encounter.js'),
+  };
+
+  if (path === '/api/encounter/start' && request.method === 'POST') {
+    const encounterId = crypto.randomUUID();
+    const body = await request.json().catch(() => ({}));
+    const graph = body.encounterId === 'dragons-lair' ? enc.demo.dragonLair : enc.demo.dragonLair;
+    const state: ReturnType<typeof enc.engine.advance>['state'] = {
+      encounterId,
+      currentUnit: graph.startUnit,
+      history: [],
+      retries: {},
+      helpUsed: [],
+      completed: false,
+      startedAt: Date.now(),
+      updatedAt: Date.now(),
+    };
+    await env.WORLD_STATE.put(enc.engine.stateKey(encounterId), JSON.stringify(state));
+    await env.WORLD_STATE.put(enc.engine.graphKey(encounterId), JSON.stringify(graph));
+    return new Response(JSON.stringify({ encounterId, graph: graph.id, unit: graph.nodes[graph.startUnit], state }), {
+      headers: { 'Content-Type': 'application/json', ...corsHeaders() },
+    });
+  }
+
+  if (path === '/api/encounter/respond' && request.method === 'POST') {
+    const body = await request.json();
+    const { encounterId, choice, checkResult } = body;
+    const raw = await env.WORLD_STATE.get(enc.engine.stateKey(encounterId));
+    if (!raw) return new Response(JSON.stringify({ error: 'Encounter not found' }), { status: 404, headers: corsHeaders() });
+    const state = JSON.parse(raw);
+    const graphRaw = await env.WORLD_STATE.get(enc.engine.graphKey(encounterId));
+    const graph = JSON.parse(graphRaw || '{}');
+    const result = enc.engine.advance(graph, state, choice, checkResult);
+    await env.WORLD_STATE.put(enc.engine.stateKey(encounterId), JSON.stringify(result.state));
+    return new Response(JSON.stringify({ unit: result.unit, state: result.state, message: result.message }), {
+      headers: { 'Content-Type': 'application/json', ...corsHeaders() },
+    });
+  }
+
+  if (path === '/api/encounter/state' && request.method === 'GET') {
+    const url = new URL(request.url);
+    const encounterId = url.searchParams.get('id');
+    if (!encounterId) return new Response(JSON.stringify({ error: 'Missing id param' }), { status: 400, headers: corsHeaders() });
+    const raw = await env.WORLD_STATE.get(enc.engine.stateKey(encounterId));
+    if (!raw) return new Response(JSON.stringify({ error: 'Encounter not found' }), { status: 404, headers: corsHeaders() });
+    return new Response(raw, { headers: { 'Content-Type': 'application/json', ...corsHeaders() } });
+  }
+
+  if (path === '/api/encounter/help' && request.method === 'POST') {
+    const body = await request.json();
+    const { encounterId, returnFromHelp } = body;
+    const raw = await env.WORLD_STATE.get(enc.engine.stateKey(encounterId));
+    if (!raw) return new Response(JSON.stringify({ error: 'Encounter not found' }), { status: 404, headers: corsHeaders() });
+    const state = JSON.parse(raw);
+    const graphRaw = await env.WORLD_STATE.get(enc.engine.graphKey(encounterId));
+    const graph = JSON.parse(graphRaw || '{}');
+    const result = returnFromHelp ? enc.engine.returnFromHelp(graph, state) : enc.engine.triggerHelp(graph, state);
+    await env.WORLD_STATE.put(enc.engine.stateKey(encounterId), JSON.stringify(result.state));
+    return new Response(JSON.stringify({ unit: result.unit, state: result.state }), {
+      headers: { 'Content-Type': 'application/json', ...corsHeaders() },
+    });
+  }
+
+  if (path === '/api/encounter/graph' && request.method === 'GET') {
+    const url = new URL(request.url);
+    const encounterId = url.searchParams.get('id');
+    const graph = encounterId
+      ? JSON.parse(await env.WORLD_STATE.get(enc.engine.graphKey(encounterId)) || '{}')
+      : enc.demo.dragonLair;
+    const ascii = enc.engine.graphToAscii(graph);
+    const dot = enc.engine.graphToDot(graph);
+    return new Response(JSON.stringify({ graph, ascii, dot }), {
+      headers: { 'Content-Type': 'application/json', ...corsHeaders() },
+    });
+  }
+
   if (path === "/api/seed" && request.method === "GET") {
     return new Response(JSON.stringify({ domain: "dmlog-ai", description: "AI Dungeon Master — D&D campaigns, NPC dialogue, combat", seedVersion: "2024.04",
       rules: ["D&D 5e core", "advantage/disadvantage", "bounded accuracy", "proficiency bonus", "saving throws", "skill checks"],
@@ -1066,6 +1145,14 @@ async function handleRequest(request: Request, env: Env): Promise<Response> {
 
   if (path === '/' && request.method === 'GET') {
     return serveStatic('index.html', 'text/html');
+  }
+  // PLATO TUTOR explorer
+  if (path === '/plato' && request.method === 'GET') {
+    return serveStatic('plato-explorer.html', 'text/html');
+  }
+  // PLATO history page
+  if (path === '/history' && request.method === 'GET') {
+    return serveStatic('plato-history.html', 'text/html');
   }
   if (path === '/app' && request.method === 'GET') {
     return serveStatic('app.html', 'text/html');
