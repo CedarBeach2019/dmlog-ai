@@ -1,3 +1,4 @@
+import { softActualize, confidenceScore } from './lib/soft-actualize.js';
 /**
  * DMLogWorker — Main Cloudflare Worker for DMLog.ai.
  *
@@ -1050,6 +1051,13 @@ async function handleRequest(request: Request, env: Env): Promise<Response> {
   }
 
   // ----- Health check -----
+  // --- Seed Route ---
+  if (path === "/api/seed" && request.method === "GET") {
+    return new Response(JSON.stringify({ domain: "dmlog-ai", description: "AI Dungeon Master — D&D campaigns, NPC dialogue, combat", seedVersion: "2024.04",
+      rules: ["D&D 5e core", "advantage/disadvantage", "bounded accuracy", "proficiency bonus", "saving throws", "skill checks"],
+      systemPrompt: "You are DMLog, an AI Dungeon Master. Narrate adventures, play NPCs, manage combat, and track world state." }), { headers: { "Content-Type": "application/json" } });
+  }
+
   if (path === "/health" && request.method === "GET") {
     return new Response(JSON.stringify({status:"ok",agent:"DMLog",files:57,lines:22012}),{headers:{"Content-Type":"application/json"}});
   }
