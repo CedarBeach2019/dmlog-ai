@@ -1075,6 +1075,13 @@ async function handleRequest(request: Request, env: Env): Promise<Response> {
 
   // ----- BYOK Setup & Config -----
 
+  if (path === '/api/efficiency' && request.method === 'GET') {
+    return new Response(JSON.stringify({
+      totalCached: 0, totalHits: 0, cacheHitRate: 0, tokensSaved: 0,
+      repo: 'dmlog-ai', timestamp: Date.now()
+    }), { headers: { 'Content-Type': 'application/json', ...corsHeaders() } });
+  }
+
   if (path === '/setup' && request.method === 'GET') {
     const html = (await import('./lib/byok.js')).generateSetupHTML('DMLog.ai', '#d4af37');
     return new Response(html, { headers: { 'Content-Type': 'text/html; charset=utf-8', ...corsHeaders() } });
