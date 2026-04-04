@@ -1904,7 +1904,9 @@ a:hover{text-decoration:underline}
 </style></head><body>
 
 <div class="hero">
-  <h1>DMLog.ai <span>AI Dungeon Master</span></h1>
+  
+      <img src="https://cocapn-logos.casey-digennaro.workers.dev/img/cocapn-logo-v1.png" alt="Cocapn" style="width:64px;height:auto;margin-bottom:.5rem;border-radius:8px;display:block;margin-left:auto;margin-right:auto">
+      <h1>DMLog.ai <span>AI Dungeon Master</span></h1>
   <p>Watch a live D&amp;D scene unfold — then bring your own key and play</p>
 </div>
 
