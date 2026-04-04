@@ -5,7 +5,6 @@ import { selectModel } from './lib/model-router.js';
 import { trackConfidence, getConfidence } from './lib/confidence-tracker.js';
 import { softActualize, confidenceScore } from './lib/soft-actualize.js';
 import { deadbandCheck, deadbandStore, getEfficiencyStats } from './lib/deadband.js';
-import { evapPipeline } from './lib/evaporation-pipeline.js';
 
 import { logResponse } from './lib/response-logger.js';
 
@@ -733,7 +732,13 @@ async function handleAssetRoutes(path: string, request: Request, env: Env): Prom
   const { startResearch, checkResearchStatus, getJob } = await import('./game/auto-research.js');
 
   // GET /api/styles — list all art styles
-  if (path === '/api/styles' && request.method === 'GET') {
+  
+    // ── Stub routes (safe fallbacks) ──
+    if (path === '/api/evaporation' && method === 'GET') {
+      return new Response(JSON.stringify({ status: 'ok', domain: 'dmlog-ai', cache: [], evapRate: 0 }), { headers: { 'Content-Type': 'application/json' } });
+    }
+
+if (path === '/api/styles' && request.method === 'GET') {
     const styles = getAllStyles();
     return new Response(JSON.stringify({ styles }), {
       headers: { 'Content-Type': 'application/json', ...corsHeaders() },
@@ -1188,10 +1193,20 @@ async function handleRequest(request: Request, env: Env): Promise<Response> {
     });
   }
 
-    // ── Knowledge Graph (Phase 4B) ─────────────────────────────
+
+    // ── Evaporation ──
+    if (path === '/api/evaporation' && method === 'GET') {
+      try {
+        const report = await getEvapReport(env, 'dmlog-ai');
+        return new Response(JSON.stringify(report || { status: 'ok', cache: [] }), { headers: { 'Content-Type': 'application/json' } });
+      } catch(e) { return new Response(JSON.stringify({ error: e.message }), { status: 500, headers: { 'Content-Type': 'application/json' } }); }
+    }
+    // ── Knowledge Graph ─────────────────────────────
     if (path === '/api/kg' && method === 'GET') {
-      const d = url.searchParams.get('domain') || 'dmlog-ai';
-      return json({ domain: d, nodes: await getDomainNodes(env, d) });
+      try {
+        const d = url.searchParams.get('domain') || 'dmlog-ai';
+        return json({ domain: d, nodes: await getDomainNodes(env, d) });
+      } catch(e) { return new Response(JSON.stringify({ domain: d, nodes: [], error: e.message }), { status: 200, headers: { 'Content-Type': 'application/json' } }); }
     }
     if (path === '/api/kg/explore' && method === 'GET') {
       const nid = url.searchParams.get('node');
