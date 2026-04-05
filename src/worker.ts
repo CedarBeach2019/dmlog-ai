@@ -34,7 +34,7 @@ interface Env {
   LLM_PROVIDER: string;       // 'openai' | 'anthropic' | 'deepseek'
   LLM_API_KEY: string;
   LLM_MODEL: string;
-  GOOGLE_API_KEY: string;
+  SILICONFLOW_API_KEY: string;
   ASSETS?: { fetch: (req: Request) => Promise<Response> };
 }
 
@@ -682,7 +682,7 @@ function corsHeaders(): Record<string, string> {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-    'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://api.openai.com https://api.anthropic.com https://generativelanguage.googleapis.com https://api.deepseek.com https://api.groq.com https://api.mistral.ai https://openrouter.ai https://api.z.ai https://*;",
+    'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://api.openai.com https://api.anthropic.com https://api.siliconflow.cn https://api.deepseek.com https://api.groq.com https://api.mistral.ai https://openrouter.ai https://api.z.ai https://*;",
   };
 }
 
@@ -958,9 +958,9 @@ if (path === '/api/styles' && request.method === 'GET') {
       const body = await request.json() as { prompt?: string; style?: string };
       if (!body.prompt) return errorResponse(400, 'bad_request');
 
-      const apiKey = env.GOOGLE_API_KEY;
+      const apiKey = env.SILICONFLOW_API_KEY;
       if (!apiKey) {
-        return new Response(JSON.stringify({ error: 'Image generation is not configured. GOOGLE_API_KEY is missing.', code: 'no_api_key' }), {
+        return new Response(JSON.stringify({ error: 'Image generation is not configured. SILICONFLOW_API_KEY is missing.', code: 'no_api_key' }), {
           status: 503,
           headers: { 'Content-Type': 'application/json', ...corsHeaders() },
         });
@@ -970,79 +970,56 @@ if (path === '/api/styles' && request.method === 'GET') {
       const styleId = body.style ?? 'norse_viking';
       const fullPrompt = buildImagePrompt(body.prompt, styleId);
 
-      const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent?key=${apiKey}`;
-
-      const geminiBody = JSON.stringify({
-        contents: [{ parts: [{ text: `Generate an image: ${fullPrompt}` }] }],
-        generationConfig: {
-          responseModalities: ['IMAGE', 'TEXT'],
-        },
-        safetySettings: [
-          { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_NONE' },
-          { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_NONE' },
-          { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_NONE' },
-          { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' },
-        ],
+      // SiliconFlow FLUX.1-schnell — fast, cheap, high quality
+      const fluxUrl = 'https://api.siliconflow.cn/v1/images/generations';
+      const fluxBody = JSON.stringify({
+        model: 'black-forest-labs/FLUX.1-schnell',
+        prompt: fullPrompt,
+        image_size: '1024x1024',
+        num_inference_steps: 20,
       });
 
-      const geminiResponse = await fetch(geminiUrl, {
+      const fluxResponse = await fetch(fluxUrl, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: geminiBody,
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + apiKey },
+        body: fluxBody,
       });
 
-      if (!geminiResponse.ok) {
-        const errText = await geminiResponse.text();
-        console.error('[DMLog] Gemini API error:', geminiResponse.status, errText);
-        if (geminiResponse.status === 429) {
+      if (!fluxResponse.ok) {
+        const errText = await fluxResponse.text();
+        console.error('[DMLog] FLUX API error:', fluxResponse.status, errText);
+        if (fluxResponse.status === 429) {
           return new Response(JSON.stringify({ error: 'Rate limited by image provider. Try again in a moment.', code: 'rate_limited' }), {
             status: 429,
             headers: { 'Content-Type': 'application/json', ...corsHeaders() },
           });
         }
-        return new Response(JSON.stringify({ error: 'Image generation failed.', code: 'gemini_error', details: errText.slice(0, 500) }), {
+        return new Response(JSON.stringify({ error: 'Image generation failed.', code: 'flux_error', details: errText.slice(0, 500) }), {
           status: 502,
           headers: { 'Content-Type': 'application/json', ...corsHeaders() },
         });
       }
 
-      const geminiData = await geminiResponse.json() as {
-        candidates?: Array<{
-          content?: {
-            parts?: Array<{ text?: string; inlineData?: { mimeType: string; data: string } }>;
-          };
-        }>;
-      };
+      const fluxData = await fluxResponse.json() as { images?: Array<{ url: string }> };
+      const imageUrl = fluxData.images?.[0]?.url;
 
-      // Extract image from response
-      let imageData: string | null = null;
-      let mimeType = 'image/png';
-      let caption = '';
-
-      const parts = geminiData.candidates?.[0]?.content?.parts ?? [];
-      for (const part of parts) {
-        if (part.inlineData?.data) {
-          imageData = part.inlineData.data;
-          mimeType = part.inlineData.mimeType || 'image/png';
-        }
-        if (part.text) {
-          caption = part.text;
-        }
-      }
-
-      if (!imageData) {
-        return new Response(JSON.stringify({ error: 'No image was generated. Try a different prompt.', code: 'no_image', caption }), {
+      if (!imageUrl) {
+        return new Response(JSON.stringify({ error: 'No image was generated. Try a different prompt.', code: 'no_image' }), {
           status: 502,
           headers: { 'Content-Type': 'application/json', ...corsHeaders() },
         });
       }
+
+      // Fetch image and convert to base64
+      const imgFetch = await fetch(imageUrl);
+      const imgBuf = await imgFetch.arrayBuffer();
+      const b64 = btoa(String.fromCharCode(...new Uint8Array(imgBuf)));
 
       return new Response(JSON.stringify({
-        image: `data:${mimeType};base64,${imageData}`,
-        mimeType,
+        image: 'data:image/png;base64,' + b64,
+        mimeType: 'image/png',
         prompt: fullPrompt,
         style: styleId,
-        caption,
       }), {
         headers: { 'Content-Type': 'application/json', ...corsHeaders() },
       });
