@@ -1,7 +1,7 @@
 import { addNode, addEdge, traverse, crossDomainQuery, findPath, domainStats, getDomainNodes } from './lib/knowledge-graph.js';
 import { loadSeedIntoKG, FLEET_REPOS, loadAllSeeds } from './lib/seed-loader.js';
 import { evapPipeline, getEvapReport, getLockStats } from './lib/evaporation-pipeline.js';
-import { selectModel } from './lib/model-router.js';
+import { selectDMModel, selectDMModelByTier, markModelFailed, getDMModels, buildBYOKModel } from './lib/model-router.js';
 import { trackConfidence, getConfidence } from './lib/confidence-tracker.js';
 import { softActualize, confidenceScore } from './lib/soft-actualize.js';
 import { deadbandCheck, deadbandStore, getEfficiencyStats } from './lib/deadband.js';
@@ -260,55 +260,79 @@ function resolveDamage(weaponDice: string, modifier: number, isCritical: boolean
 // ---------------------------------------------------------------------------
 
 async function callLLM(messages: LLMMessage[], env: Env, stream?: (chunk: string) => void): Promise<string> {
-  const provider = (env.LLM_PROVIDER || 'openai').toLowerCase();
+  // Try DM-optimized multi-provider router first
+  const dmModel = selectDMModel(env as any);
+  if (dmModel) {
+    try {
+      const apiKey = (env as any)[dmModel.envKey];
+      const body: any = {
+        model: dmModel.model,
+        messages,
+        max_tokens: dmModel.maxTokens,
+        temperature: dmModel.temperature,
+      };
+      if (stream) body.stream = true;
+      const resp = await fetch(dmModel.url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + apiKey },
+        body: JSON.stringify(body),
+      });
+      if (resp.ok) {
+        if (stream) {
+          // Handle SSE streaming
+          const text = await handleStream(resp, stream);
+          return text;
+        }
+        const d = await resp.json();
+        const reply = d.choices?.[0]?.message?.content || '';
+        if (reply) return reply;
+      }
+      markModelFailed(dmModel.name);
+      console.error(`[DMLog] Model ${dmModel.name} failed: ${resp.status}`);
+    } catch (err) {
+      markModelFailed(dmModel.name);
+      console.error(`[DMLog] Model ${dmModel.name} error:`, err);
+    }
+  }
+
+  // Fallback: legacy single-provider (LLM_PROVIDER + LLM_API_KEY)
+  const provider = (env.LLM_PROVIDER || '').toLowerCase();
   const apiKey = env.LLM_API_KEY;
   const model = env.LLM_MODEL || 'gpt-4o-mini';
-
-  if (!apiKey) {
-    return generateFallbackNarration(messages);
+  if (apiKey) {
+    try {
+      if (provider === 'anthropic') {
+        return await callAnthropic(messages, apiKey, model, stream);
+      }
+      return await callOpenAICompatible(messages, apiKey, model, provider, stream);
+    } catch (err) {
+      console.error(`[DMLog] Legacy LLM failed (${provider}):`, err);
+    }
   }
 
-  try {
-    if (provider === 'anthropic') {
-      return await callAnthropic(messages, apiKey, model, stream);
-    }
-    // Default: OpenAI-compatible (covers OpenAI and DeepSeek)
-    return await callOpenAICompatible(messages, apiKey, model, provider, stream);
-  } catch (err) {
-    // ── Phase 4: Structural Memory Routes ──
-    if (url.pathname === '/api/memory' && request.method === 'GET') {
-      const source = url.searchParams.get('source') || undefined;
-      const patterns = await listPatterns(env, source);
-      return new Response(JSON.stringify(patterns), { headers: jsonHeaders });
-    }
-    if (url.pathname === '/api/memory' && request.method === 'POST') {
-      const body = await request.json();
-      await storePattern(env, body);
-      return new Response(JSON.stringify({ ok: true, id: body.id }), { headers: jsonHeaders });
-    }
-    if (url.pathname === '/api/memory/similar') {
-      const structure = url.searchParams.get('structure') || '';
-      const threshold = parseFloat(url.searchParams.get('threshold') || '0.7');
-      const similar = await findSimilar(env, structure, threshold);
-      return new Response(JSON.stringify(similar), { headers: jsonHeaders });
-    }
-    if (url.pathname === '/api/memory/transfer') {
-      const fromRepo = url.searchParams.get('from') || '';
-      const toRepo = url.searchParams.get('to') || '';
-      const problem = url.searchParams.get('problem') || '';
-      const transfers = await crossRepoTransfer(env, fromRepo, toRepo, problem);
-      return new Response(JSON.stringify(transfers), { headers: jsonHeaders });
-    }
-    if (url.pathname === '/api/memory/sync' && request.method === 'POST') {
-      const body = await request.json();
-      const repos = body.repos || [];
-      const result = await fleetSync(env, repos);
-      return new Response(JSON.stringify(result), { headers: jsonHeaders });
-    }
+  return generateFallbackNarration(messages);
+}
 
-    console.error(`[DMLog] LLM call failed (${provider}):`, err);
-    return generateFallbackNarration(messages);
+async function handleStream(resp: Response, stream: (chunk: string) => void): Promise<string> {
+  const reader = resp.body?.getReader();
+  if (!reader) return '';
+  const decoder = new TextDecoder();
+  let full = '';
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    const text = decoder.decode(value, { stream: true });
+    for (const line of text.split('\n')) {
+      if (line.startsWith('data: ') && line !== 'data: [DONE]') {
+        try {
+          const d = JSON.parse(line.slice(6));
+          const chunk = d.choices?.[0]?.delta?.content || '';
+          if (chunk) { full += chunk; stream(chunk); }
+        } catch {}
+      }
+    }
   }
+  return full;
 }
 
 async function callOpenAICompatible(
@@ -1202,7 +1226,16 @@ async function handleRequest(request: Request, env: any): Promise<Response> {
   }
 
   if (path === "/health" && request.method === "GET") {
-    return new Response(JSON.stringify({status:"ok",agent:"DMLog",files:57,lines:22012}),{headers:{"Content-Type":"application/json"}});
+    return new Response(JSON.stringify({status:"ok",agent:"DMLog",files:57,lines:22012,models:getDMModels().map(m=>({name:m.name,tier:m.tier,provider:m.provider}))}),{headers:{"Content-Type":"application/json"}});
+  }
+
+  if (path === "/api/models" && request.method === "GET") {
+    const available = getDMModels().map(m => ({
+      name: m.name, tier: m.tier, provider: m.provider,
+      hasKey: !!(env as any)[m.envKey],
+    }));
+    const active = selectDMModel(env as any);
+    return new Response(JSON.stringify({ models: available, active: active?.name || 'fallback' }), { headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } });
   }
 
   // ----- Static asset routes -----
