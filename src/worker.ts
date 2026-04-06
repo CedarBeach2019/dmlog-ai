@@ -1107,6 +1107,7 @@ async function handleRequest(request: Request, env: any): Promise<Response> {
   if (!byokConfig && path !== '/setup' && path !== '/api/byok/config') {
     // Allow through for static assets and health checks
     if (path !== '/' && path !== '/css/style.css' && path !== '/js/app.js' && path !== '/api/campaign' && path !== '/health') {
+    if (path === '/vessel.json') { try { const vj = await import('./vessel.json', { with: { type: 'json' } }); return json(vj.default || vj); } catch { return json({}); } }
       // If no config and it's an API route that needs LLM, still allow but use fallback
     }
   }
