@@ -1,69 +1,61 @@
-<p align="center">
-  <img src="https://raw.githubusercontent.com/Lucineer/capitaine/master/docs/capitaine-logo.jpg" alt="Capitaine" width="120">
-</p>
+# dmlog-ai 🎲
 
-<h1 align="center">dmlog-ai</h1>
+A quiet table assistant that remembers your campaign details, so you don’t have to. It does not run your game—it just takes notes and answers when asked.
 
-<p align="center">An AI assistant for TTRPG campaigns that retains session context. Handles character tracking, dice rolls, and campaign notes.</p>
-
-<p align="center">
-  <a href="#quick-start">Quick Start</a> ·
-  <a href="#features">Features</a> ·
-  <a href="#limitations">Limitations</a> ·
-  <a href="https://github.com/Lucineer/dmlog-ai/issues">Issues</a>
-</p>
+**Live Demo:** [dmlog-ai.casey-digennaro.workers.dev](https://dmlog-ai.casey-digennaro.workers.dev)
 
 ---
 
-**Live Example:** [dmlog-ai.casey-digennaro.workers.dev](https://dmlog-ai.casey-digennaro.workers.dev)
+## Why It Exists
 
-You run a session. Next week, you can't recall what the bard promised the lighthouse keeper. This tool helps with that. It stores campaign details and session history, so you can pause and resume.
+Many TTRPG tools either lock your data, lose context, or try to take over. This one sits quietly: it takes notes during sessions and lets you query them later, nothing more.
 
-dmlog-ai retains campaign context across sessions by storing notes and history in your own Cloudflare Worker. It handles dice rolls and basic character stat management. It is not a full AI game engine, but a persistent assistant for your table.
+---
 
-### What This Is
-This is an open-source, self-hosted agent you fork and deploy. Your campaign data stays in your Cloudflare account. You can modify the code or stop using it at any time without losing access.
+## How It Is Different
 
-### How It Works
-- You fork this repository and deploy it as a Cloudflare Worker.
-- Campaign state is stored in your Worker's KV storage.
-- The assistant uses your provided LLM API key (like DeepSeek) to generate responses.
-- Dice rolls use a cryptographically secure random function.
+1.  **Fork-first, no central server.** You deploy your own copy. You own every part.
+2.  **Zero lock‑in.** All campaign history is stored as plain text in Cloudflare KV. Export or delete it anytime.
+3.  **Zero runtime dependencies.** Runs entirely on Cloudflare Workers. No hidden servers, databases, or personal‑use bills.
 
 ---
 
 ## Quick Start
 
-```bash
-# Fork this repository first, then clone your fork.
-git clone https://github.com/YOUR_USERNAME/dmlog-ai
-cd dmlog-ai
-npx wrangler login
-npx wrangler secret put GITHUB_TOKEN # Your GitHub token
-npx wrangler secret put DEEPSEEK_API_KEY # Or another supported key
-npx wrangler deploy
-```
+Deploy your own private copy in about two minutes:
 
-Visit your deployed Worker URL. Your instance is running.
-
-## Features
-
-- **Self-hosted Memory:** Session history and campaign notes are stored in your Cloudflare KV.
-- **Multi-Model Support:** Works with DeepSeek, SiliconFlow, and other OpenAI-compatible endpoints.
-- **Dice Rolling:** Handles standard dice notation (e.g., 1d20+5) with fair randomization.
-- **Basic Rate Limiting:** Configurable request limits per IP for public sharing.
-- **Health Endpoint:** Includes a standard `/health` endpoint for monitoring.
-
-## Limitations
-
-Campaign memory is stored in Cloudflare KV, which has a 1GB limit per namespace and eventual consistency. For extremely long campaigns with vast logs, you may need to implement archival.
+1.  Fork this repository.
+2.  Clone your fork, then run:
+    ```bash
+    cd dmlog-ai
+    npx wrangler login
+    npx wrangler secret put GITHUB_TOKEN
+    npx wrangler secret put DEEPSEEK_API_KEY
+    npx wrangler deploy
+    ```
+3.  Visit the URL shown after deployment. That’s your instance.
 
 ---
 
-<div align="center">
-  <p>
-    <a href="https://the-fleet.casey-digennaro.workers.dev">The Fleet</a> ·
-    <a href="https://cocapn.ai">Cocapn.ai</a>
-  </p>
-  <p>Attribution: Superinstance & Lucineer (DiGennaro et al.). MIT Licensed.</p>
-</div>
+## Features
+
+-   Session memory that persists across your campaign
+-   Compatible with DeepSeek, OpenAI, and any OpenAI‑compatible LLM endpoint
+-   Cryptographically fair dice roller (standard notation like `2d20+4`)
+-   Optional public sharing with per‑IP rate limiting
+-   Works for in‑person or remote tables; no accounts required
+-   Simple `/health` endpoint for uptime checks
+
+---
+
+## Limitations
+
+Cloudflare KV is used for storage. Each namespace is limited to 10MB, which holds roughly 200–300 pages of typical campaign notes. If you exceed this, you will need to archive or export older sessions.
+
+---
+
+## Usage
+
+Designed for personal or small‑group use. Cloudflare’s free tier covers typical home campaigns. No tracking, no telemetry. Open source under the MIT license.
+
+<div style="text-align:center;padding:16px;color:#64748b;font-size:.8rem"><a href="https://the-fleet.casey-digennaro.workers.dev" style="color:#64748b">The Fleet</a> &middot; <a href="https://cocapn.ai" style="color:#64748b">Cocapn</a></div>
